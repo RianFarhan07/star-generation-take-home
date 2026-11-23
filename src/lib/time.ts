@@ -57,6 +57,11 @@ export function wibTimeInput(iso: string): string {
   return shifted.toISOString().slice(11, 16);
 }
 
+/** "2026-11-01" (a logbook's month) -> "November 2026". */
+export function formatMonth(firstDay: string): string {
+  return new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${firstDay}T00:00:00Z`));
+}
+
 /** 90 -> "1.5 h", 720 -> "12 h". */
 export function formatHours(minutes: number): string {
   return `${Number((minutes / 60).toFixed(2))} h`;

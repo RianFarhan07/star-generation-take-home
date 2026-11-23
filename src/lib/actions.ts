@@ -13,13 +13,26 @@ export async function callRpc(
   fn: string,
   args: Record<string, unknown>,
   paths: string[],
-  message?: string,
+  message?: string | ((result: unknown) => string),
 ): Promise<ActionState> {
   const supabase = await createClient();
-  const { error } = await supabase.rpc(fn, args);
+  const { data, error } = await supabase.rpc(fn, args);
   if (error) return { ok: false, error: messageForError(error) };
   paths.forEach((path) => revalidatePath(path));
-  return { ok: true, message };
+  return { ok: true, message: typeof message === "function" ? message(data) : message };
+}
+
+/** Like callRpc but returns the function's result too (for actions that redirect to what was just created). */
+export async function callRpcResult<T>(
+  fn: string,
+  args: Record<string, unknown>,
+  paths: string[],
+): Promise<{ ok: true; data: T } | { ok: false; error: string }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc(fn, args);
+  if (error) return { ok: false, error: messageForError(error) };
+  paths.forEach((path) => revalidatePath(path));
+  return { ok: true, data: data as T };
 }
 
 export function text(formData: FormData, key: string): string {

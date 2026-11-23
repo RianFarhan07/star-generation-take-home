@@ -12,6 +12,10 @@ const DEMO_LOGINS = [
   ["Student", "student.citra@example.com"],
 ];
 
+// The seeded demo logins are only listed on the page when this flag is on (set in .env.example for a local
+// demo). A deployed copy should leave it off and change the seeded passwords.
+const SHOW_DEMO_LOGINS = process.env.NEXT_PUBLIC_SHOW_DEMO_LOGINS === "true";
+
 export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
@@ -37,20 +41,22 @@ export default function LoginPage() {
             <SubmitButton className="w-full">Sign in</SubmitButton>
           </ActionForm>
 
-          <details className="mt-8 rounded-card border border-cloud bg-white p-3 text-sm">
-            <summary className="cursor-pointer font-semibold">Demo logins</summary>
-            <p className="mt-2 text-xs text-muted">
-              Seeded accounts for this demo. Password for all: <code className="font-semibold text-navy">Password123!</code>
-            </p>
-            <ul className="mt-2 space-y-1 text-xs">
-              {DEMO_LOGINS.map(([role, email]) => (
-                <li key={email} className="flex justify-between gap-3">
-                  <span className="text-muted">{role}</span>
-                  <span className="font-medium">{email}</span>
-                </li>
-              ))}
-            </ul>
-          </details>
+          {SHOW_DEMO_LOGINS ? (
+            <details className="mt-8 rounded-card border border-cloud bg-white p-3 text-sm">
+              <summary className="cursor-pointer font-semibold">Demo logins</summary>
+              <p className="mt-2 text-xs text-muted">
+                Seeded accounts for this demo. Password for all: <code className="font-semibold text-navy">Password123!</code>
+              </p>
+              <ul className="mt-2 space-y-1 text-xs">
+                {DEMO_LOGINS.map(([role, email]) => (
+                  <li key={email} className="flex justify-between gap-3">
+                    <span className="text-muted">{role}</span>
+                    <span className="font-medium">{email}</span>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
         </div>
       </div>
     </div>

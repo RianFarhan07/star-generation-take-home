@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatHours, formatWib, wibInputToUtcIso, wibMonthStart } from "@/lib/time";
+import { formatHours, formatMonth, formatWib, wibInputToUtcIso, wibMonthStart } from "@/lib/time";
 
 // The server runs in UTC and a browser can be anywhere: WIB must not depend on the host zone.
 process.env.TZ = "America/New_York";
@@ -46,5 +46,12 @@ describe("formatHours", () => {
     expect(formatHours(720)).toBe("12 h");
     expect(formatHours(45)).toBe("0.75 h");
     expect(formatHours(0)).toBe("0 h");
+  });
+});
+
+describe("formatMonth", () => {
+  it("names the month of a logbook's first day", () => {
+    expect(formatMonth("2026-11-01")).toBe("November 2026");
+    expect(formatMonth("2027-01-01")).toBe("January 2027");
   });
 });

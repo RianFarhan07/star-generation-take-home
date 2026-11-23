@@ -1,5 +1,6 @@
-import { PageHeader } from "@/components/ui/Card";
+import { redirect } from "next/navigation";
 
+// Replaced by the overview page in the improvements step.
 export default function AdminHome() {
-  return <PageHeader title="Overview" subtitle="Coming together in the next steps." />;
+  redirect("/admin/classes");
 }
