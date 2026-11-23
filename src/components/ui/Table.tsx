@@ -14,7 +14,7 @@ export function Th({ children, className = "" }: { children?: ReactNode; classNa
 }
 
 export function Td({ children, className = "" }: { children?: ReactNode; className?: string }) {
-  return <td className={`border-b border-cloud px-3 py-2.5 align-middle last-of-type:border-b-0 ${className}`}>{children}</td>;
+  return <td className={`border-b border-cloud px-3 py-2.5 align-middle ${className}`}>{children}</td>;
 }
 
 export function Tr({ children }: { children: ReactNode }) {

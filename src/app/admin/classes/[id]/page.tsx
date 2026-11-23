@@ -10,6 +10,7 @@ import { embedded, LIVE_STATUSES, one, rows } from "@/lib/db";
 import { formatRupiah } from "@/lib/money";
 import { createClient } from "@/lib/supabase/server";
 import { formatHours, formatWib } from "@/lib/time";
+import { Profitability } from "./Profitability";
 import { addLesson, cancelLesson, changeClassTutor, setClassCapacity, setClassRates, updateClassDetails } from "../../actions";
 
 type ClassRow = { id: string; name: string; description: string; capacity: number; package_hours: number; tutor_id: string; tutor: { full_name: string } | { full_name: string }[] | null };
@@ -73,7 +74,9 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
         }
       />
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <Profitability classId={cls.id} />
+
+      <div className="mt-6 grid gap-5 lg:grid-cols-2">
         <Card>
           <CardHeader title="Rates" />
           {current ? (
