@@ -18,7 +18,8 @@ type LessonRow = {
   status: string;
   cancel_reason: string | null;
   class: { name: string } | { name: string }[] | null;
-  entries: { id: string }[];
+  // one-to-one embed: PostgREST returns an object (or null), not an array
+  entries: { id: string } | { id: string }[] | null;
 };
 
 export default async function SchedulePage() {
@@ -58,13 +59,13 @@ export default async function SchedulePage() {
             <Td>{formatHours(l.duration_minutes)}</Td>
             <Td>
               <Badge status={l.status} />
-              {l.entries.length > 0 ? <span className="ml-2 text-xs text-muted">entry written</span> : null}
+              {embedded(l.entries) ?  <span className="ml-2 text-xs text-muted">entry written</span> : null}
               {l.cancel_reason ? <span className="ml-2 text-xs text-muted">{l.cancel_reason}</span> : null}
             </Td>
             <Td>
               {l.status === "scheduled" ? (
                 <div className="flex justify-end gap-2">
-                  {l.entries.length === 0 ? (
+                  {!embedded(l.entries) ? (
                     <ConfirmDialog
                       triggerLabel="Move"
                       title="Change the time of this lesson"
