@@ -23,7 +23,33 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "class_rates": {
+            "cancelled_lesson_snapshots": {
+                  Row: {
+                    "cancelled_by": string | null,"created_at": string,"lesson_id": string,"snapshot": NonNullable<Json>
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "cancelled_by"?: string | null,"created_at"?: string,"lesson_id": string,"snapshot": NonNullable<Json>
+                  }
+                  Update: {
+                    "cancelled_by"?: string | null,"created_at"?: string,"lesson_id"?: string,"snapshot"?: NonNullable<Json>
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "cancelled_lesson_snapshots_cancelled_by_fkey"
+      columns: ["cancelled_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "cancelled_lesson_snapshots_lesson_id_fkey"
+      columns: ["lesson_id"]
+isOneToOne: true
+      referencedRelation: "lessons"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"class_rates": {
                   Row: {
                     "class_id": string,"created_at": string,"created_by": string | null,"effective_from": string,"id": string,"student_rate_per_hour": number,"tutor_rate_per_hour": number
                   }
@@ -155,14 +181,14 @@ isOneToOne: false
                   ]
                 },"lessons": {
                   Row: {
-                    "cancel_reason": string | null,"cancelled_at": string | null,"cancelled_by": string | null,"cancelled_entry_snapshot": Json | null,"class_id": string,"created_at": string,"created_by": string | null,"duration_minutes": number | null,"ends_at": string,"id": string,"series_id": string | null,"starts_at": string,"status": Database["public"]['Enums']["lesson_status"],"tutor_id": string
+                    "cancel_reason": string | null,"cancelled_at": string | null,"cancelled_by": string | null,"class_id": string,"created_at": string,"created_by": string | null,"duration_minutes": number | null,"ends_at": string,"id": string,"series_id": string | null,"starts_at": string,"status": Database["public"]['Enums']["lesson_status"],"tutor_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"cancelled_entry_snapshot"?: Json | null,"class_id": string,"created_at"?: string,"created_by"?: string | null,"duration_minutes"?: never,"ends_at": string,"id"?: string,"series_id"?: string | null,"starts_at": string,"status"?: Database["public"]['Enums']["lesson_status"],"tutor_id": string
+                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"class_id": string,"created_at"?: string,"created_by"?: string | null,"duration_minutes"?: never,"ends_at": string,"id"?: string,"series_id"?: string | null,"starts_at": string,"status"?: Database["public"]['Enums']["lesson_status"],"tutor_id": string
                   }
                   Update: {
-                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"cancelled_entry_snapshot"?: Json | null,"class_id"?: string,"created_at"?: string,"created_by"?: string | null,"duration_minutes"?: never,"ends_at"?: string,"id"?: string,"series_id"?: string | null,"starts_at"?: string,"status"?: Database["public"]['Enums']["lesson_status"],"tutor_id"?: string
+                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"class_id"?: string,"created_at"?: string,"created_by"?: string | null,"duration_minutes"?: never,"ends_at"?: string,"id"?: string,"series_id"?: string | null,"starts_at"?: string,"status"?: Database["public"]['Enums']["lesson_status"],"tutor_id"?: string
                   }
                   Relationships: [
                     {
@@ -447,7 +473,18 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "auth_role":
+            "_ledger":
+{ Args: { "p_enrollment_id": string,"p_now"?: string }; Returns: Database["public"]['CompositeTypes']["ledger_row"][]
+                          SetofOptions: {
+        from: "*"
+        to: "ledger_row"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
+"adjust_invoice_hours":
+{ Args: { "p_hours": number,"p_invoice_id": string,"p_reason": string }; Returns: undefined
+                           },
+"auth_role":
 { Args: Record<PropertyKey, never>; Returns: Database["public"]['Enums']["user_role"]
                            },
 "can_manage_lessons":
@@ -464,6 +501,9 @@ isOneToOne: false
                            },
 "create_lesson":
 { Args: { "p_class_id": string,"p_ends_at": string,"p_starts_at": string }; Returns: string
+                           },
+"create_renewal_invoice":
+{ Args: { "p_actor": string,"p_enrollment_id": string }; Returns: string
                            },
 "current_class_rate":
 { Args: { "p_at"?: string,"p_class_id": string }; Returns: {
@@ -484,6 +524,19 @@ isOneToOne: false
 "enroll_in_class":
 { Args: { "p_accept_terms": boolean,"p_class_id": string }; Returns: string
                            },
+"enrollment_access":
+{ Args: { "p_enrollment_id": string }; Returns: string
+                           },
+"enrollment_balance":
+{ Args: { "p_enrollment_id": string,"p_now"?: string }; Returns: {
+              "low_hours": boolean,"next_lesson_covered": boolean,"next_lesson_id": string,"out_of_hours": boolean,"purchased_minutes": number,"remaining_minutes": number,"remaining_value": number,"used_minutes": number
+            }[]
+                           },
+"enrollment_ledger":
+{ Args: { "p_enrollment_id": string,"p_now"?: string }; Returns: {
+              "lesson_id": string,"minutes": number,"starts_at": string,"status": string,"value": number
+            }[]
+                           },
 "entry_class_id":
 { Args: { "p_entry_id": string }; Returns: string
                            },
@@ -501,6 +554,9 @@ isOneToOne: false
                            },
 "is_class_tutor":
 { Args: { "p_class_id": string }; Returns: boolean
+                           },
+"issue_renewal_invoice":
+{ Args: { "p_enrollment_id": string }; Returns: string
                            },
 "lesson_month":
 { Args: { "p_ts": string }; Returns: string
@@ -537,6 +593,9 @@ isOneToOne: false
 "require_admin":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
+"reverse_payment":
+{ Args: { "p_invoice_id": string,"p_reason": string }; Returns: undefined
+                           },
 "set_class_capacity":
 { Args: { "p_capacity": number,"p_class_id": string }; Returns: undefined
                            },
@@ -563,7 +622,9 @@ isOneToOne: false
             "end_cause": "student"|"business"|"expired"|"rejected"|"not_renewed","enrollment_status": "pending_payment"|"awaiting_verification"|"active"|"cancelled"|"withdrawn","invoice_kind": "initial"|"renewal","invoice_status": "unpaid"|"awaiting_verification"|"paid"|"cancelled","lesson_status": "scheduled"|"cancelled","logbook_status": "draft"|"submitted"|"changes_requested"|"approved","payment_kind": "transfer_report"|"offline","payment_status": "pending"|"verified"|"rejected"|"reversed","refund_cause": "business"|"exception"|"late_no_seat","refund_status": "pending"|"refunded"|"cancelled","review_action": "submitted"|"changes_requested"|"admin_edited"|"approved","user_role": "admin"|"tutor"|"student"
           }
           CompositeTypes: {
-            [_ in never]: never
+            "ledger_row": {
+                        "lesson_id": string | null,"starts_at": string | null,"minutes": number | null,"status": string | null,"invoice_id": string | null,"split_minutes": number | null,"rate_per_hour": number | null
+                      }
           }
         }
 }

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { SEED, signIn } from "./clients";
+import { SEED, serviceClient, signIn } from "./clients";
 
 /** Signed-in seed admin (used to call admin functions in tests; the seed admin owns no demo data we change). */
 export function adminClient(): Promise<SupabaseClient> {
@@ -67,6 +67,22 @@ export async function enrollAndPay(
   const { error } = await admin.rpc("verify_payment", { p_payment_id: paymentId });
   if (error) throw new Error(`verify_payment failed: ${error.message}`);
   return { enrollmentId, invoiceId, paymentId };
+}
+
+/**
+ * Time travel for tests only: pretend the student paid and was activated at `to` (service role).
+ * Needed because lessons only count after activation and entries only exist for lessons that have ended.
+ */
+export async function backdateActivation(enrollmentId: string, to: Date): Promise<void> {
+  const service = serviceClient();
+  const enrollment = await service.from("enrollments").update({ activated_at: to.toISOString() }).eq("id", enrollmentId);
+  if (enrollment.error) throw new Error(`backdate enrollment failed: ${enrollment.error.message}`);
+  const invoices = await service
+    .from("invoices")
+    .update({ paid_at: to.toISOString() })
+    .eq("enrollment_id", enrollmentId)
+    .eq("status", "paid");
+  if (invoices.error) throw new Error(`backdate invoices failed: ${invoices.error.message}`);
 }
 
 /** Schedules a lesson of `minutes` (default 90) through create_lesson and returns its id. */
