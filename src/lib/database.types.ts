@@ -473,7 +473,12 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "_ledger":
+            "_balance":
+{ Args: { "p_enrollment_id": string,"p_now"?: string }; Returns: {
+              "low_hours": boolean,"next_lesson_covered": boolean,"next_lesson_id": string,"out_of_hours": boolean,"purchased_minutes": number,"remaining_minutes": number,"remaining_value": number,"used_minutes": number
+            }[]
+                           },
+"_ledger":
 { Args: { "p_enrollment_id": string,"p_now"?: string }; Returns: Database["public"]['CompositeTypes']["ledger_row"][]
                           SetofOptions: {
         from: "*"
@@ -492,6 +497,9 @@ isOneToOne: false
                            },
 "admin_edit_entry":
 { Args: { "p_activities": string,"p_entry_id": string,"p_observation": string,"p_recommendation": string,"p_topic": string }; Returns: undefined
+                           },
+"admin_overview":
+{ Args: { "p_now"?: string }; Returns: Json
                            },
 "approve_logbook":
 { Args: { "p_logbook_id": string }; Returns: number
@@ -513,6 +521,14 @@ isOneToOne: false
                            },
 "change_class_tutor":
 { Args: { "p_class_id": string,"p_new_tutor_id": string }; Returns: number
+                           },
+"class_profitability":
+{ Args: { "p_class_id": string,"p_now"?: string }; Returns: Json
+                           },
+"class_roster":
+{ Args: { "p_class_id": string }; Returns: {
+              "enrollment_id": string,"enrollment_status": Database["public"]['Enums']["enrollment_status"],"full_name": string,"low_hours": boolean,"next_lesson_covered": boolean,"student_id": string
+            }[]
                            },
 "create_class":
 { Args: { "p_capacity": number,"p_description": string,"p_name": string,"p_package_hours": number,"p_student_rate": number,"p_tutor_id": string,"p_tutor_rate": number }; Returns: string
@@ -650,6 +666,11 @@ isOneToOne: false
                            },
 "teaches_in_class":
 { Args: { "p_class_id": string }; Returns: boolean
+                           },
+"tutor_earnings_statement":
+{ Args: { "p_month"?: string }; Returns: {
+              "amount": number,"class_id": string,"class_name": string,"has_entry": boolean,"lesson_id": string,"minutes": number,"rate_per_hour": number,"starts_at": string,"status": string
+            }[]
                            },
 "update_class_details":
 { Args: { "p_class_id": string,"p_description": string,"p_name": string,"p_package_hours": number }; Returns: undefined
