@@ -70,9 +70,14 @@ Leave it off, and change the seeded passwords, for anything that is deployed.
 4. **Verify.** As the admin, *Overview* shows Sari's transfer under *Needs attention*. Open it and verify it;
    Sari now sees the schedule, her hours and approved logbooks. (Reject it instead to see the seat released.)
 5. **Hours running out.** Sign in as Budi: *Low hours* and a renewal invoice. The admin *Overview* lists him too.
-6. **Money.** Admin → *Classes* → open the class for **profitability** (revenue counted from hours actually used,
+   His class page opens with *What's next* from the last approved logbook.
+6. **Waitlist and notifications.** As Citra (class full) press *Join waitlist*. As the admin, reject Sari's transfer
+   (or let her 24 hours run out): Citra's bell shows that a seat is **reserved for her for 24 hours**, and
+   nobody else can enroll into it. Every role has a *Notifications* page (invoices, payment decisions, cancelled
+   lessons, logbook updates). Tutors can also schedule a lesson with *Repeat weekly for 8 weeks*.
+7. **Money.** Admin → *Classes* → open the class for **profitability** (revenue counted from hours actually used,
    tutor cost, margin, break-even head count). As Andi, *Earnings* answers "what will I be paid?" per lesson.
-7. **Things that must not work.** As a student, open `/admin` (you are sent back to `/student`). Rates are never
+8. **Things that must not work.** As a student, open `/admin` (you are sent back to `/student`). Rates are never
    visible to tutors, and a student cannot read a logbook that is not approved, even through the API.
 
 ## Tests
@@ -109,5 +114,8 @@ tests/                 unit tests and API-level integration tests
 
 - **Windows:** run `npm` commands from a terminal whose current folder starts with an **upper-case** drive letter
   (`C:\...`); some terminals report `c:\...`, which breaks the test runner.
+- **A test run ends with "Worker exited unexpectedly" (or without a summary):** on Windows with Node 24 the test
+  runner's child process occasionally dies on its own, losing a few tests of one file. It is not an assertion
+  failure; run `npm test` again. Every other run passes in full.
 - **Supabase will not start:** make sure Docker Desktop is running, then `npx supabase stop` and start again.
 - **Ports:** the local stack uses 54321 (API), 54322 (database) and 54323 (Studio).

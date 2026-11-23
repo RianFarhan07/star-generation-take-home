@@ -69,6 +69,11 @@ Time-dependent behaviour (24 hour payment window, renewal at ≤ 3 hours, seat r
 `run_scheduled_jobs(p_now)` (`fn_lifecycle`), run by `pg_cron` every 5 minutes. It takes the clock as a
 parameter so tests can simulate time instead of waiting.
 
+Notifications and the waitlist are driven by `AFTER` triggers on the tables where the events happen (invoices,
+payments, lessons, logbooks, refunds, enrollments), so none of the functions above had to change and no code path
+can forget to notify or to hand a freed seat to the next student. The capacity trigger also treats a seat reserved
+for another student on the waitlist as taken.
+
 ## Tests
 
 `tests/db/*.test.ts` sign in as the seeded or freshly created users and call the real REST/RPC API: parallel

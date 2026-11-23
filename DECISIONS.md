@@ -191,6 +191,25 @@ need an entry. One SQL function computes a lesson's earning and is used by the s
 and the approval, so the estimate equals the final amount unless a lesson is cancelled during review. *Left out:*
 payout records, payslips, tax.
 
+### Smaller additions built on top
+
+These are not among the three main improvements; each answers one more sentence of *How the business works*.
+
+- **Progress page for students and parents.** *"Parents and students rely on [the logbook] to follow progress."* The
+  class page opens with *What's next* (the latest approved entry's recommendation) and the topics covered so far,
+  built only from approved logbooks (the database already hides everything else).
+- **Recurring lessons.** A tutor schedules "every Monday 16:00–17:30 WIB for 8 weeks" in one step. It is all or
+  nothing against the overlap rule: if any week clashes, nothing is created and every clashing date is listed.
+  Each lesson stays an ordinary lesson, so it can still be cancelled on its own.
+- **In-app notifications.** *"Today this runs on spreadsheets and WhatsApp."* A bell with an unread count for
+  invoices, payment decisions, cancelled lessons, logbook submissions, change requests and approvals, and refunds.
+  They are written by database triggers on the tables where the events happen, so no code path can forget to notify;
+  everyone reads only their own. Delivery by e-mail or WhatsApp is left out.
+- **Waitlist with a priority window.** When a class is full students can queue. When a seat frees up (payment window
+  expired, payment rejected, cancellation, withdrawal or a larger capacity) the first in line is offered it for 24
+  hours and nobody else can take it; an unused offer passes to the next student. *Left out:* offering several seats
+  at once to a group, and automatically enrolling the student.
+
 ## Known weaknesses
 
 - The no-refund rule for students who leave may need legal review (see 3c). A student withdrawn after not
@@ -207,15 +226,14 @@ payout records, payslips, tax.
 
 ## What I would build next with another day
 
-1. **Notifications** (in-app first, then WhatsApp or email) for invoices, verification, cancelled lessons and
-   logbook decisions: the whole product replaces WhatsApp threads, so this is the biggest gap.
-2. **Waitlist with a priority window** for the first person in line when a seat is freed.
-3. **Recurring lessons** (every Monday for 8 weeks, all-or-nothing against the overlap rule).
-4. A **progress page** for students and parents built from approved logbooks ("what's next").
-5. **Excused absences** as an opt-in per-class quota, switched on once data shows it is worth Rp225,000 per absence.
-6. **Unique transfer codes** (Rp1,800,123) so transfers match the bank statement automatically, then bank
+1. **Delivery of notifications** beyond the in-app bell (WhatsApp or e-mail), with per-user preferences and
+   reminders before a payment window ends: the product replaces WhatsApp threads, so this is the biggest gap.
+2. **Excused absences** as an opt-in per-class quota, switched on once data shows it is worth Rp225,000 per absence.
+3. **Unique transfer codes** (Rp1,800,123) so transfers match the bank statement automatically, then bank
    statement import, then a real payment gateway behind the same verification function.
-7. **Correction invoices** for hours already used when a payment turns out to be invalid; payouts and payslips
-   for tutors; per-class payment window and renewal threshold.
-8. A **diff view** for admin edits to logbooks, search and filters, and deployment (hosted Supabase + Vercel).
-9. A **legal review** of the refund clause and the data held about minors.
+4. **Correction invoices** for hours already used when a payment turns out to be invalid; payouts and payslips
+   for tutors; per-class payment window and renewal threshold; scheduled (future-dated) rate changes.
+5. A **diff view** for admin edits to logbooks, search and filters, browser-level end-to-end tests, and
+   deployment (hosted Supabase + Vercel).
+6. A **re-enroll cool-down** against holding a seat for 24 hours repeatedly without paying.
+7. A **legal review** of the refund clause and of the data held about minors.
