@@ -103,6 +103,13 @@ export async function runJobs(now: Date, only: string[]): Promise<{ expired: num
   return data as { expired: number; renewals: number; released: number };
 }
 
+/** Runs the scheduled jobs as if it were `now`, limited to the waitlists of the given classes (service role). */
+export async function runClassJobs(now: Date, classIds: string[]): Promise<Record<string, number>> {
+  const { data, error } = await serviceClient().rpc("run_scheduled_jobs", { p_now: now.toISOString(), p_classes: classIds });
+  if (error) throw new Error(`run_scheduled_jobs failed: ${error.message}`);
+  return data as Record<string, number>;
+}
+
 /** A moment `hours` from now. */
 export function hoursFromNow(hours: number): Date {
   return new Date(Date.now() + hours * 3600_000);

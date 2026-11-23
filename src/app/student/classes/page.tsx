@@ -4,7 +4,8 @@ import { Card, EmptyState, PageHeader } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { formatRupiah } from "@/lib/money";
 import { createClient } from "@/lib/supabase/server";
-import { enrollInClass } from "../actions";
+import { formatWib } from "@/lib/time";
+import { enrollInClass, joinWaitlist, leaveWaitlist } from "../actions";
 
 type OpenClass = {
   class_id: string;
@@ -16,6 +17,9 @@ type OpenClass = {
   seats_left: number;
   my_enrollment_id: string | null;
   my_enrollment_status: string | null;
+  on_waitlist: boolean;
+  waitlist_position: number | null;
+  offer_until: string | null;
 };
 
 const LIVE = ["pending_payment", "awaiting_verification", "active"];
@@ -61,8 +65,43 @@ export default async function BrowseClassesPage() {
                       </Link>
                     </p>
                   ) : c.seats_left === 0 ? (
-                    <p className="text-sm text-muted">This class is full.</p>
+                    c.on_waitlist ? (
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                        <span>
+                          You are <strong>#{c.waitlist_position}</strong> on the waitlist.
+                        </span>
+                        <ConfirmDialog
+                          triggerLabel="Leave waitlist"
+                          triggerVariant="destructive"
+                          title="Leave the waitlist"
+                          description="You lose your place in line."
+                          confirmLabel="Leave waitlist"
+                          confirmVariant="destructive"
+                          action={leaveWaitlist}
+                          values={{ classId: c.class_id }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                        <span className="text-muted">This class is full.</span>
+                        <ConfirmDialog
+                          triggerLabel="Join waitlist"
+                          triggerVariant="primary"
+                          title={`Join the waitlist for ${c.name}`}
+                          description="When a seat opens up, the first student in line gets it reserved for 24 hours and a notification."
+                          confirmLabel="Join waitlist"
+                          action={joinWaitlist}
+                          values={{ classId: c.class_id }}
+                        />
+                      </div>
+                    )
                   ) : (
+                    <>
+                    {c.offer_until ? (
+                      <p className="mb-2 rounded-card bg-gold/15 p-2 text-sm font-semibold">
+                        A seat is reserved for you until {formatWib(c.offer_until)}.
+                      </p>
+                    ) : null}
                     <ConfirmDialog
                       triggerLabel="Enroll"
                       triggerVariant="primary"
@@ -77,6 +116,7 @@ export default async function BrowseClassesPage() {
                         <span>I understand there is no refund if I withdraw from the class.</span>
                       </label>
                     </ConfirmDialog>
+                    </>
                   )}
                 </div>
               </Card>

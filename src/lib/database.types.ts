@@ -339,6 +339,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"notifications": {
+                  Row: {
+                    "body": string,"created_at": string,"id": string,"kind": string,"link": string | null,"read_at": string | null,"title": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "body"?: string,"created_at"?: string,"id"?: string,"kind": string,"link"?: string | null,"read_at"?: string | null,"title": string,"user_id": string
+                  }
+                  Update: {
+                    "body"?: string,"created_at"?: string,"id"?: string,"kind"?: string,"link"?: string | null,"read_at"?: string | null,"title"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "notifications_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"payments": {
                   Row: {
                     "amount": number,"bank": string | null,"id": string,"invoice_id": string,"kind": Database["public"]['Enums']["payment_kind"],"no_seat": boolean,"proof_path": string | null,"reference": string | null,"reject_reason": string | null,"reported_at": string,"reported_by": string | null,"reversal_reason": string | null,"reversed_at": string | null,"reversed_by": string | null,"reviewed_at": string | null,"reviewed_by": string | null,"sender_name": string | null,"status": Database["public"]['Enums']["payment_status"],"transfer_date": string | null
@@ -467,6 +487,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"waitlist": {
+                  Row: {
+                    "class_id": string,"created_at": string,"id": string,"offered_until": string | null,"student_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "class_id": string,"created_at"?: string,"id"?: string,"offered_until"?: string | null,"student_id": string
+                  }
+                  Update: {
+                    "class_id"?: string,"created_at"?: string,"id"?: string,"offered_until"?: string | null,"student_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "waitlist_class_id_fkey"
+      columns: ["class_id"]
+isOneToOne: false
+      referencedRelation: "classes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "waitlist_student_id_fkey"
+      columns: ["student_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
@@ -486,6 +532,9 @@ isOneToOne: false
         isOneToOne: false
         isSetofReturn: true
       } },
+"_offer_free_seats":
+{ Args: { "p_class_id": string,"p_now"?: string }; Returns: undefined
+                           },
 "_remaining_minutes":
 { Args: { "p_enrollment_id": string,"p_now"?: string }; Returns: number
                            },
@@ -598,6 +647,12 @@ isOneToOne: false
 "issue_renewal_invoice":
 { Args: { "p_enrollment_id": string }; Returns: string
                            },
+"join_waitlist":
+{ Args: { "p_class_id": string }; Returns: undefined
+                           },
+"leave_waitlist":
+{ Args: { "p_class_id": string }; Returns: undefined
+                           },
 "lesson_earning":
 { Args: { "p_lesson_id": string }; Returns: {
               "amount": number,"minutes": number,"rate_per_hour": number
@@ -608,7 +663,7 @@ isOneToOne: false
                            },
 "list_open_classes":
 { Args: Record<PropertyKey, never>; Returns: {
-              "class_id": string,"description": string,"my_enrollment_id": string,"my_enrollment_status": Database["public"]['Enums']["enrollment_status"],"name": string,"package_hours": number,"package_price": number,"seats_left": number,"tutor_name": string
+              "class_id": string,"description": string,"my_enrollment_id": string,"my_enrollment_status": Database["public"]['Enums']["enrollment_status"],"name": string,"offer_until": string,"on_waitlist": boolean,"package_hours": number,"package_price": number,"seats_left": number,"tutor_name": string,"waitlist_position": number
             }[]
                            },
 "log_invoice_event":
@@ -620,11 +675,17 @@ isOneToOne: false
 "mark_invoice_paid":
 { Args: { "p_invoice_id": string }; Returns: undefined
                            },
+"mark_notifications_read":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
 "mark_paid_offline":
 { Args: { "p_invoice_id": string,"p_reference": string }; Returns: string
                            },
 "mark_refunded":
 { Args: { "p_bank_reference": string,"p_refund_id": string }; Returns: undefined
+                           },
+"notify":
+{ Args: { "p_body": string,"p_kind": string,"p_link": string,"p_title": string,"p_user": string }; Returns: undefined
                            },
 "owns_enrollment":
 { Args: { "p_enrollment_id": string }; Returns: boolean
@@ -653,7 +714,10 @@ isOneToOne: false
 { Args: { "p_invoice_id": string,"p_reason": string }; Returns: undefined
                            },
 "run_scheduled_jobs":
-{ Args: { "p_now"?: string,"p_only"?: (string)[] }; Returns: Json
+{ Args: { "p_classes"?: (string)[],"p_now"?: string,"p_only"?: (string)[] }; Returns: Json
+                           },
+"rupiah_text":
+{ Args: { "p_amount": number }; Returns: string
                            },
 "set_class_capacity":
 { Args: { "p_capacity": number,"p_class_id": string }; Returns: undefined
@@ -686,6 +750,9 @@ isOneToOne: false
                            },
 "verify_payment":
 { Args: { "p_payment_id": string }; Returns: undefined
+                           },
+"wib_text":
+{ Args: { "p_ts": string }; Returns: string
                            },
 "withdraw_enrollment":
 { Args: { "p_cause": Database["public"]['Enums']["end_cause"],"p_enrollment_id": string,"p_reason": string }; Returns: string
