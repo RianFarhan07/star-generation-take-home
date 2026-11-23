@@ -132,6 +132,18 @@ describe("a transfer that arrives after the payment window (Decision 5d)", () =>
     expect((await taker.client.from("refunds").select()).data).toEqual([]);
   });
 
+  it("refunds the invoice amount, not the figure the student typed; a surplus is an admin decision", async () => {
+    const { admin, classId, student, enrollmentId, invoiceId } = await expired({ capacity: 1 });
+    await enroll((await makeUser("student")).client, classId);
+    const reported = await student.client.rpc("report_payment", {
+      p_invoice_id: invoiceId, p_sender_name: "Budi", p_bank: "BCA", p_transfer_date: "2026-11-24", p_amount: 2500000,
+    });
+    expect(reported.error).toBeNull();
+    expect((await admin.rpc("verify_payment", { p_payment_id: reported.data })).error).toBeNull();
+    const refunds = await student.client.from("refunds").select("amount").eq("enrollment_id", enrollmentId);
+    expect(refunds.data).toEqual([{ amount: 1800000 }]);
+  });
+
   it("creates no refund when the admin rejects the late payment", async () => {
     const { admin, classId, student, enrollmentId, invoiceId } = await expired({ capacity: 1 });
     await enroll((await makeUser("student")).client, classId);
