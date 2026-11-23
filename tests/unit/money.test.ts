@@ -25,4 +25,12 @@ describe("parseRupiah", () => {
       expect(parseRupiah(s)).toBeNull();
     }
   });
+
+  it("rejects amounts that mix '.' and ',' because their meaning is ambiguous", () => {
+    for (const s of ["1.500,000", "1,500.000", "1.500.000,000"]) {
+      expect(parseRupiah(s)).toBeNull();
+    }
+    expect(parseRupiah("1.500.000")).toBe(1500000);
+    expect(parseRupiah("1,500,000")).toBe(1500000);
+  });
 });

@@ -9,9 +9,9 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
-    "db:start": "supabase start",
-    "db:reset": "supabase db reset",
-    "db:types": "supabase gen types typescript --local > src/lib/database.types.ts"
+    "db:start": "npx supabase start",
+    "db:reset": "npx supabase db reset",
+    "db:types": "npx supabase gen types typescript --local > src/lib/database.types.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
