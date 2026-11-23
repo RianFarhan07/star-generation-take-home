@@ -6,6 +6,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { embedded, one, rows } from "@/lib/db";
 import { formatRupiah } from "@/lib/money";
 import { createClient } from "@/lib/supabase/server";
+import { summarizeProgress } from "@/lib/progress";
 import { formatHours, formatMonth, formatWib } from "@/lib/time";
 import { issueRenewal, withdraw } from "../../actions";
 
@@ -67,6 +68,11 @@ export default async function StudentClassPage({ params }: { params: Promise<{ i
   const now = new Date().toISOString();
   const upcoming = lessons.filter((l) => l.ends_at > now);
   const past = lessons.filter((l) => l.ends_at <= now).reverse();
+  const progress = summarizeProgress(
+    logbooks.flatMap((book) =>
+      book.entries.map((e) => ({ starts_at: embedded(e.lesson)?.starts_at ?? "", topic: e.topic, recommendation: e.recommendation })),
+    ),
+  );
   const usedPercent = balance.purchased_minutes > 0 ? Math.min(100, Math.round((balance.used_minutes / balance.purchased_minutes) * 100)) : 0;
 
   return (
@@ -173,6 +179,29 @@ export default async function StudentClassPage({ params }: { params: Promise<{ i
           </Card>
         </div>
       </div>
+
+      {progress.next ? (
+        <section className="mt-6 grid gap-4 lg:grid-cols-3">
+          <div className="rounded-card border border-gold bg-gold/15 p-4 lg:col-span-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted">What&apos;s next</p>
+            <p className="mt-1 text-base font-semibold">{progress.next.recommendation}</p>
+            <p className="mt-1 text-xs text-muted">
+              From the lesson on {formatWib(progress.next.starts_at)} · {progress.next.topic}
+            </p>
+          </div>
+          <Card className="p-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted">Topics covered ({progress.topics.length})</p>
+            <ul className="mt-2 space-y-1 text-sm">
+              {progress.topics.slice(0, 6).map((t) => (
+                <li key={t.starts_at} className="flex justify-between gap-3">
+                  <span>{t.topic}</span>
+                  <span className="text-xs text-muted">{formatWib(t.starts_at, { withDate: true }).split(" · ")[0]}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </section>
+      ) : null}
 
       <section className="mt-6">
         <h2 className="mb-1 text-sm font-semibold">Logbooks</h2>
