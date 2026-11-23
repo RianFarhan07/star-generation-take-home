@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+/* Star Generation theme tokens (brief). Components use these names, never raw hex values. */
+@theme {
+  --color-navy: #2f3f5f; /* primary text, sidebar, primary buttons */
+  --color-gold: #f1c019; /* accent, highlights, active states */
+  --color-surface: #fafdff; /* cards and page background */
+  --color-cloud: #e0e2e7; /* borders */
+  --color-muted: #6e7585; /* muted text */
+  --color-success: #0ab848; /* Paid, Approved */
+  --color-destructive: #ff2819; /* errors, overdue, reject */
+  --color-field: #f1f3f6; /* filled form inputs */
+  --radius-card: 6px;
+}
+
+@theme inline {
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  background: var(--color-surface);
+}
+
+body {
+  background: var(--color-surface);
+  color: var(--color-navy);
+  font-family: var(--font-sans);
+}
