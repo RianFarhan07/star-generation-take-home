@@ -113,7 +113,7 @@ export default async function SchedulePage() {
       {classes.length > 0 ? (
         <Card className="mb-6 p-4">
           <h2 className="mb-3 text-sm font-semibold">Schedule a lesson</h2>
-          <ActionForm action={addLesson} className="grid gap-3 sm:grid-cols-4" resetOnSuccess>
+          <ActionForm action={addLesson} className="grid gap-3 sm:grid-cols-5" resetOnSuccess>
             <Field label="Class">
               <Select name="classId" required defaultValue={classes[0].id}>
                 {classes.map((c) => (
@@ -132,7 +132,10 @@ export default async function SchedulePage() {
             <Field label="Ends (WIB)">
               <Input name="end" type="time" required defaultValue="17:30" />
             </Field>
-            <div className="sm:col-span-4">
+            <Field label="Repeat weekly for" hint="Weeks (1 = just this lesson)">
+              <Input name="weeks" type="number" min={1} max={26} defaultValue={1} required />
+            </Field>
+            <div className="sm:col-span-5">
               <SubmitButton>Schedule lesson</SubmitButton>
             </div>
           </ActionForm>

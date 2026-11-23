@@ -33,5 +33,7 @@ export function messageForError(err: { message?: string; code?: string }): strin
   if (!match) return GENERIC;
   const [, code, text] = match;
   if (KEEP_TEXT.has(code)) return sentence(text);
+  // A recurring series names every date that clashes: keep that list.
+  if (code === "LESSON_OVERLAP" && text.includes("dates overlap")) return sentence(text);
   return BY_CODE[code] ?? GENERIC;
 }

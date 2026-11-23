@@ -1,7 +1,7 @@
 "use server";
 
 import { requireRole } from "@/lib/session";
-import { callRpc, text, type ActionState } from "@/lib/actions";
+import { callRpc, int, text, type ActionState } from "@/lib/actions";
 import { wibInputToUtcIso } from "@/lib/time";
 
 // Every tutor action is one database function call; the database checks that the caller teaches the class.
@@ -23,6 +23,17 @@ export async function addLesson(_state: ActionState, formData: FormData): Promis
   await requireRole("tutor");
   const range = times(formData);
   if (!range) return { ok: false, error: "Enter a valid date and times." };
+
+  const weeks = int(formData, "weeks") ?? 1;
+  if (weeks > 1) {
+    const minutes = Math.round((Date.parse(range.endsAt) - Date.parse(range.startsAt)) / 60_000);
+    return callRpc(
+      "create_lesson_series",
+      { p_class_id: text(formData, "classId"), p_first_starts_at: range.startsAt, p_minutes: minutes, p_weeks: weeks },
+      SCHEDULE_PATHS,
+      `${weeks} weekly lessons scheduled.`,
+    );
+  }
   return callRpc(
     "create_lesson",
     { p_class_id: text(formData, "classId"), p_starts_at: range.startsAt, p_ends_at: range.endsAt },

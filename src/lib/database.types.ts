@@ -539,6 +539,9 @@ isOneToOne: false
 "create_lesson":
 { Args: { "p_class_id": string,"p_ends_at": string,"p_starts_at": string }; Returns: string
                            },
+"create_lesson_series":
+{ Args: { "p_class_id": string,"p_first_starts_at": string,"p_minutes": number,"p_weeks": number }; Returns: (string)[]
+                           },
 "create_renewal_invoice":
 { Args: { "p_actor": string,"p_enrollment_id": string }; Returns: string
                            },

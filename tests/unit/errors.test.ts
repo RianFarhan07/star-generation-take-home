@@ -25,3 +25,17 @@ describe("messageForError", () => {
     expect(messageForError({})).toBe("Something went wrong. Please try again.");
   });
 });
+
+describe("messageForError for a recurring series", () => {
+  it("keeps the list of clashing dates", () => {
+    const message = messageForError({ message: "LESSON_OVERLAP: these dates overlap another lesson of the tutor: 15 Dec 2026, 22 Dec 2026" });
+    expect(message).toMatch(/overlap/i);
+    expect(message).toContain("15 Dec 2026, 22 Dec 2026");
+  });
+
+  it("keeps the generic overlap sentence when there is no list", () => {
+    expect(messageForError({ message: "LESSON_OVERLAP: the tutor already has a lesson at that time" })).toBe(
+      "That time overlaps another lesson of the same tutor.",
+    );
+  });
+});
