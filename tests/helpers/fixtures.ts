@@ -30,6 +30,16 @@ export async function createClass(admin: SupabaseClient, o: ClassOptions): Promi
   return data as string;
 }
 
+/** Student enrolls (accepting the no-refund terms) and gets the initial invoice. */
+export async function enroll(student: SupabaseClient, classId: string): Promise<{ enrollmentId: string; invoiceId: string }> {
+  const { data, error } = await student.rpc("enroll_in_class", { p_class_id: classId, p_accept_terms: true });
+  if (error) throw new Error(`enroll_in_class failed: ${error.message}`);
+  const enrollmentId = data as string;
+  const invoice = await student.from("invoices").select("id").eq("enrollment_id", enrollmentId).single();
+  if (invoice.error) throw new Error(`reading the invoice failed: ${invoice.error.message}`);
+  return { enrollmentId, invoiceId: invoice.data.id as string };
+}
+
 /** A moment `days` from now at `hourWib`:00 WIB (negative days = the past). */
 export function daysFromNow(days: number, hourWib = 16): Date {
   const wibNow = new Date(Date.now() + 7 * 3600_000);

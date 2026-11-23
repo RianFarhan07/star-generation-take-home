@@ -450,6 +450,9 @@ isOneToOne: false
             "auth_role":
 { Args: Record<PropertyKey, never>; Returns: Database["public"]['Enums']["user_role"]
                            },
+"cancel_pending_enrollment":
+{ Args: { "p_enrollment_id": string }; Returns: undefined
+                           },
 "create_class":
 { Args: { "p_capacity": number,"p_description": string,"p_name": string,"p_package_hours": number,"p_student_rate": number,"p_tutor_id": string,"p_tutor_rate": number }; Returns: string
                            },
@@ -469,6 +472,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"enroll_in_class":
+{ Args: { "p_accept_terms": boolean,"p_class_id": string }; Returns: string
+                           },
 "entry_class_id":
 { Args: { "p_entry_id": string }; Returns: string
                            },
