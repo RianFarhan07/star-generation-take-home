@@ -155,14 +155,14 @@ isOneToOne: false
                   ]
                 },"lessons": {
                   Row: {
-                    "cancel_reason": string | null,"cancelled_at": string | null,"cancelled_by": string | null,"class_id": string,"created_at": string,"created_by": string | null,"duration_minutes": number | null,"ends_at": string,"id": string,"series_id": string | null,"starts_at": string,"status": Database["public"]['Enums']["lesson_status"],"tutor_id": string
+                    "cancel_reason": string | null,"cancelled_at": string | null,"cancelled_by": string | null,"cancelled_entry_snapshot": Json | null,"class_id": string,"created_at": string,"created_by": string | null,"duration_minutes": number | null,"ends_at": string,"id": string,"series_id": string | null,"starts_at": string,"status": Database["public"]['Enums']["lesson_status"],"tutor_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"class_id": string,"created_at"?: string,"created_by"?: string | null,"duration_minutes"?: never,"ends_at": string,"id"?: string,"series_id"?: string | null,"starts_at": string,"status"?: Database["public"]['Enums']["lesson_status"],"tutor_id": string
+                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"cancelled_entry_snapshot"?: Json | null,"class_id": string,"created_at"?: string,"created_by"?: string | null,"duration_minutes"?: never,"ends_at": string,"id"?: string,"series_id"?: string | null,"starts_at": string,"status"?: Database["public"]['Enums']["lesson_status"],"tutor_id": string
                   }
                   Update: {
-                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"class_id"?: string,"created_at"?: string,"created_by"?: string | null,"duration_minutes"?: never,"ends_at"?: string,"id"?: string,"series_id"?: string | null,"starts_at"?: string,"status"?: Database["public"]['Enums']["lesson_status"],"tutor_id"?: string
+                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"cancelled_entry_snapshot"?: Json | null,"class_id"?: string,"created_at"?: string,"created_by"?: string | null,"duration_minutes"?: never,"ends_at"?: string,"id"?: string,"series_id"?: string | null,"starts_at"?: string,"status"?: Database["public"]['Enums']["lesson_status"],"tutor_id"?: string
                   }
                   Relationships: [
                     {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { expectCode, makeUser } from "../helpers/clients";
+import { expectCode, makeUser, serviceClient } from "../helpers/clients";
 import { adminClient, createClass, daysFromNow, lesson } from "../helpers/fixtures";
 import { wibInputToUtcIso } from "../../src/lib/time";
 
@@ -117,6 +117,29 @@ describe("who may schedule and cancel", () => {
     const student = await makeUser("student");
     await expectCode(other.client.rpc("cancel_lesson", { p_lesson_id: id, p_reason: "nope" }), "NOT_ALLOWED");
     await expectCode(student.client.rpc("cancel_lesson", { p_lesson_id: id, p_reason: "nope" }), "NOT_ALLOWED");
+  });
+
+  it("does not let a replaced tutor cancel lessons of a class they no longer teach", async () => {
+    const { tutor: formerTutor, classId } = await setup();
+    const id = await lesson(formerTutor.client, classId, daysFromNow(-2));
+    const successor = await makeUser("tutor");
+    const { error: swapError } = await serviceClient().from("classes").update({ tutor_id: successor.id }).eq("id", classId);
+    expect(swapError).toBeNull();
+    await expectCode(formerTutor.client.rpc("cancel_lesson", { p_lesson_id: id, p_reason: "no longer mine" }), "NOT_ALLOWED");
+    const { error } = await successor.client.rpc("cancel_lesson", { p_lesson_id: id, p_reason: "it did not happen" });
+    expect(error).toBeNull();
+  });
+
+  it("answers NOT_ALLOWED, not NOT_FOUND, when a non-admin schedules into a class id that does not exist", async () => {
+    const tutor = await makeUser("tutor");
+    await expectCode(
+      tutor.client.rpc("create_lesson", {
+        p_class_id: crypto.randomUUID(),
+        p_starts_at: daysFromNow(20).toISOString(),
+        p_ends_at: daysFromNow(20, 17).toISOString(),
+      }),
+      "NOT_ALLOWED",
+    );
   });
 
   it("changes a lesson's time only while it is scheduled and still collision-free", async () => {
