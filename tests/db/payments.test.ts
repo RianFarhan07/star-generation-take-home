@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { expectCode, makeUser } from "../helpers/clients";
+import { expectCode, makeUser, serviceClient } from "../helpers/clients";
 import { adminClient, createClass, daysFromNow, enroll, enrollAndPay, lesson, reportPayment } from "../helpers/fixtures";
 
 async function setup(capacity = 2) {
@@ -124,6 +124,35 @@ describe("a student reports a transfer, the admin verifies it", () => {
     await expectCode(admin.rpc("mark_paid_offline", { p_invoice_id: invoiceId, p_reference: "again" }), "INVALID_STATE");
     const events = await admin.from("invoice_events").select("action").eq("invoice_id", invoiceId);
     expect(events.data!.map((e) => e.action)).toEqual(expect.arrayContaining(["issued", "paid_offline"]));
+  });
+});
+
+describe("verification guards", () => {
+  it("refuses to verify a transfer that is less than the invoice amount, but accepts the exact amount", async () => {
+    const { admin, classId } = await setup();
+    const student = await makeUser("student");
+    const { invoiceId } = await enroll(student.client, classId);
+    const short = await student.client.rpc("report_payment", {
+      p_invoice_id: invoiceId, p_sender_name: "Budi", p_bank: "BCA", p_transfer_date: "2026-11-24", p_amount: 100000,
+    });
+    expect(short.error).toBeNull();
+    await expectCode(admin.rpc("verify_payment", { p_payment_id: short.data }), "VALIDATION");
+    const invoice = await student.client.from("invoices").select("status").eq("id", invoiceId).single();
+    expect(invoice.data!.status).toBe("awaiting_verification");
+    const rejected = await admin.rpc("reject_payment", { p_payment_id: short.data, p_reason: "only Rp100,000 arrived" });
+    expect(rejected.error).toBeNull();
+  });
+
+  it("refuses to verify when the invoice is no longer awaiting verification", async () => {
+    const { admin, classId } = await setup();
+    const student = await makeUser("student");
+    const { invoiceId } = await enroll(student.client, classId);
+    const paymentId = await reportPayment(student.client, invoiceId);
+    const cancel = await serviceClient().from("invoices").update({ status: "cancelled", cancel_reason: "test" }).eq("id", invoiceId);
+    expect(cancel.error).toBeNull();
+    await expectCode(admin.rpc("verify_payment", { p_payment_id: paymentId }), "INVALID_STATE");
+    const invoice = await student.client.from("invoices").select("status").eq("id", invoiceId).single();
+    expect(invoice.data!.status).toBe("cancelled");
   });
 });
 
