@@ -484,6 +484,9 @@ isOneToOne: false
 "adjust_invoice_hours":
 { Args: { "p_hours": number,"p_invoice_id": string,"p_reason": string }; Returns: undefined
                            },
+"admin_edit_entry":
+{ Args: { "p_activities": string,"p_entry_id": string,"p_observation": string,"p_recommendation": string,"p_topic": string }; Returns: undefined
+                           },
 "auth_role":
 { Args: Record<PropertyKey, never>; Returns: Database["public"]['Enums']["user_role"]
                            },
@@ -590,6 +593,9 @@ isOneToOne: false
 "report_payment":
 { Args: { "p_amount": number,"p_bank": string,"p_invoice_id": string,"p_proof_path"?: string,"p_sender_name": string,"p_transfer_date": string }; Returns: string
                            },
+"request_logbook_changes":
+{ Args: { "p_comment": string,"p_flagged_entry_ids"?: (string)[],"p_logbook_id": string }; Returns: undefined
+                           },
 "require_admin":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
@@ -605,6 +611,9 @@ isOneToOne: false
 "shares_class_with":
 { Args: { "p_profile_id": string }; Returns: boolean
                            },
+"submit_logbook":
+{ Args: { "p_logbook_id": string }; Returns: undefined
+                           },
 "teaches_in_class":
 { Args: { "p_class_id": string }; Returns: boolean
                            },
@@ -613,6 +622,9 @@ isOneToOne: false
                            },
 "update_lesson_time":
 { Args: { "p_ends_at": string,"p_lesson_id": string,"p_starts_at": string }; Returns: undefined
+                           },
+"upsert_logbook_entry":
+{ Args: { "p_activities": string,"p_lesson_id": string,"p_observation": string,"p_recommendation": string,"p_topic": string }; Returns: string
                            },
 "verify_payment":
 { Args: { "p_payment_id": string }; Returns: undefined

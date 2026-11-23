@@ -96,6 +96,19 @@ export async function lesson(caller: SupabaseClient, classId: string, start: Dat
   return data as string;
 }
 
+/**
+ * The previous WIB month, for tests about ended lessons: every day of it is in the past and in one month,
+ * whatever day the suite runs on. `firstDay` is "YYYY-MM-01"; `at(day, hourWib)` is that day at hourWib WIB.
+ */
+export function previousMonth(): { firstDay: string; at: (day: number, hourWib?: number) => Date } {
+  const wibNow = new Date(Date.now() + 7 * 3600_000);
+  const year = wibNow.getUTCFullYear();
+  const month = wibNow.getUTCMonth() - 1; // 0-based, may be -1 (JS normalises the year)
+  const first = new Date(Date.UTC(year, month, 1));
+  const firstDay = `${first.getUTCFullYear()}-${String(first.getUTCMonth() + 1).padStart(2, "0")}-01`;
+  return { firstDay, at: (day, hourWib = 16) => new Date(Date.UTC(year, month, day, hourWib - 7, 0, 0)) };
+}
+
 /** A moment `days` from now at `hourWib`:00 WIB (negative days = the past). */
 export function daysFromNow(days: number, hourWib = 16): Date {
   const wibNow = new Date(Date.now() + 7 * 3600_000);
