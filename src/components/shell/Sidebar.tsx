@@ -17,12 +17,16 @@ export function Sidebar({
   userName,
   roleLabel,
   signOut,
+  notificationsHref,
+  unread,
 }: {
   groups: NavGroup[];
   roleHome: string;
   userName: string;
   roleLabel: string;
   signOut: () => Promise<void>;
+  notificationsHref: string;
+  unread: number;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -71,6 +75,23 @@ export function Sidebar({
             </div>
           ))}
         </nav>
+        <div className="px-3 pb-2">
+          <Link
+            href={notificationsHref}
+            onClick={() => setOpen(false)}
+            aria-current={pathname === notificationsHref ? "page" : undefined}
+            className={`flex items-center justify-between rounded-card px-3 py-2 text-sm ${
+              pathname === notificationsHref ? "bg-gold font-bold text-navy" : "text-white/80 hover:bg-white/10"
+            }`}
+          >
+            Notifications
+            {unread > 0 ? (
+              <span className="rounded-full bg-destructive px-2 py-0.5 text-xs font-bold text-white" aria-label={`${unread} unread`}>
+                {unread}
+              </span>
+            ) : null}
+          </Link>
+        </div>
         <div className="border-t border-white/15 px-5 py-4 text-sm">
           <div className="font-semibold">{userName}</div>
           <div className="text-xs text-white/60">{roleLabel}</div>
