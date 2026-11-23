@@ -96,6 +96,18 @@ export async function lesson(caller: SupabaseClient, classId: string, start: Dat
   return data as string;
 }
 
+/** Runs the scheduled jobs as if it were `now` (service role), only for the given enrollments. */
+export async function runJobs(now: Date, only: string[]): Promise<{ expired: number; renewals: number; released: number }> {
+  const { data, error } = await serviceClient().rpc("run_scheduled_jobs", { p_now: now.toISOString(), p_only: only });
+  if (error) throw new Error(`run_scheduled_jobs failed: ${error.message}`);
+  return data as { expired: number; renewals: number; released: number };
+}
+
+/** A moment `hours` from now. */
+export function hoursFromNow(hours: number): Date {
+  return new Date(Date.now() + hours * 3600_000);
+}
+
 /**
  * The previous WIB month, for tests about ended lessons: every day of it is in the past and in one month,
  * whatever day the suite runs on. `firstDay` is "YYYY-MM-01"; `at(day, hourWib)` is that day at hourWib WIB.

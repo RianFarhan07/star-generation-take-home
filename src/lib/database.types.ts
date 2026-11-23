@@ -481,6 +481,12 @@ isOneToOne: false
         isOneToOne: false
         isSetofReturn: true
       } },
+"_remaining_minutes":
+{ Args: { "p_enrollment_id": string,"p_now"?: string }; Returns: number
+                           },
+"_remaining_value":
+{ Args: { "p_enrollment_id": string,"p_now"?: string }; Returns: number
+                           },
 "adjust_invoice_hours":
 { Args: { "p_hours": number,"p_invoice_id": string,"p_reason": string }; Returns: undefined
                            },
@@ -502,11 +508,17 @@ isOneToOne: false
 "cancel_pending_enrollment":
 { Args: { "p_enrollment_id": string }; Returns: undefined
                            },
+"cancel_refund":
+{ Args: { "p_reason": string,"p_refund_id": string }; Returns: undefined
+                           },
 "change_class_tutor":
 { Args: { "p_class_id": string,"p_new_tutor_id": string }; Returns: number
                            },
 "create_class":
 { Args: { "p_capacity": number,"p_description": string,"p_name": string,"p_package_hours": number,"p_student_rate": number,"p_tutor_id": string,"p_tutor_rate": number }; Returns: string
+                           },
+"create_exception_refund":
+{ Args: { "p_amount": number,"p_enrollment_id": string,"p_reason": string }; Returns: string
                            },
 "create_lesson":
 { Args: { "p_class_id": string,"p_ends_at": string,"p_starts_at": string }; Returns: string
@@ -592,6 +604,9 @@ isOneToOne: false
 "mark_paid_offline":
 { Args: { "p_invoice_id": string,"p_reference": string }; Returns: string
                            },
+"mark_refunded":
+{ Args: { "p_bank_reference": string,"p_refund_id": string }; Returns: undefined
+                           },
 "owns_enrollment":
 { Args: { "p_enrollment_id": string }; Returns: boolean
                            },
@@ -617,6 +632,9 @@ isOneToOne: false
                            },
 "reverse_payment":
 { Args: { "p_invoice_id": string,"p_reason": string }; Returns: undefined
+                           },
+"run_scheduled_jobs":
+{ Args: { "p_now"?: string,"p_only"?: (string)[] }; Returns: Json
                            },
 "set_class_capacity":
 { Args: { "p_capacity": number,"p_class_id": string }; Returns: undefined
@@ -644,6 +662,9 @@ isOneToOne: false
                            },
 "verify_payment":
 { Args: { "p_payment_id": string }; Returns: undefined
+                           },
+"withdraw_enrollment":
+{ Args: { "p_cause": Database["public"]['Enums']["end_cause"],"p_enrollment_id": string,"p_reason": string }; Returns: string
                            }
           }
           Enums: {
