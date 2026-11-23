@@ -487,6 +487,9 @@ isOneToOne: false
 "admin_edit_entry":
 { Args: { "p_activities": string,"p_entry_id": string,"p_observation": string,"p_recommendation": string,"p_topic": string }; Returns: undefined
                            },
+"approve_logbook":
+{ Args: { "p_logbook_id": string }; Returns: number
+                           },
 "auth_role":
 { Args: Record<PropertyKey, never>; Returns: Database["public"]['Enums']["user_role"]
                            },
@@ -498,6 +501,9 @@ isOneToOne: false
                            },
 "cancel_pending_enrollment":
 { Args: { "p_enrollment_id": string }; Returns: undefined
+                           },
+"change_class_tutor":
+{ Args: { "p_class_id": string,"p_new_tutor_id": string }; Returns: number
                            },
 "create_class":
 { Args: { "p_capacity": number,"p_description": string,"p_name": string,"p_package_hours": number,"p_student_rate": number,"p_tutor_id": string,"p_tutor_rate": number }; Returns: string
@@ -561,6 +567,11 @@ isOneToOne: false
 "issue_renewal_invoice":
 { Args: { "p_enrollment_id": string }; Returns: string
                            },
+"lesson_earning":
+{ Args: { "p_lesson_id": string }; Returns: {
+              "amount": number,"minutes": number,"rate_per_hour": number
+            }[]
+                           },
 "lesson_month":
 { Args: { "p_ts": string }; Returns: string
                            },
@@ -586,6 +597,11 @@ isOneToOne: false
                            },
 "owns_invoice":
 { Args: { "p_invoice_id": string }; Returns: boolean
+                           },
+"preview_logbook_earnings":
+{ Args: { "p_logbook_id": string }; Returns: {
+              "amount": number,"lesson_id": string,"minutes": number,"rate_per_hour": number,"starts_at": string,"tutor_id": string,"tutor_name": string
+            }[]
                            },
 "reject_payment":
 { Args: { "p_payment_id": string,"p_reason": string }; Returns: undefined
