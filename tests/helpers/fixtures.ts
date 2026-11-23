@@ -40,6 +40,35 @@ export async function enroll(student: SupabaseClient, classId: string): Promise<
   return { enrollmentId, invoiceId: invoice.data.id as string };
 }
 
+/** The student reports a bank transfer for the invoice (full amount) and returns the payment id. */
+export async function reportPayment(student: SupabaseClient, invoiceId: string, extra: { proofPath?: string } = {}): Promise<string> {
+  const invoice = await student.from("invoices").select("amount").eq("id", invoiceId).single();
+  if (invoice.error) throw new Error(`reading the invoice failed: ${invoice.error.message}`);
+  const { data, error } = await student.rpc("report_payment", {
+    p_invoice_id: invoiceId,
+    p_sender_name: "Test Sender",
+    p_bank: "BCA",
+    p_transfer_date: new Date().toISOString().slice(0, 10),
+    p_amount: invoice.data.amount,
+    p_proof_path: extra.proofPath ?? null,
+  });
+  if (error) throw new Error(`report_payment failed: ${error.message}`);
+  return data as string;
+}
+
+/** Enroll, report the transfer and have the admin verify it: the student ends up active and paid. */
+export async function enrollAndPay(
+  student: SupabaseClient,
+  admin: SupabaseClient,
+  classId: string,
+): Promise<{ enrollmentId: string; invoiceId: string; paymentId: string }> {
+  const { enrollmentId, invoiceId } = await enroll(student, classId);
+  const paymentId = await reportPayment(student, invoiceId);
+  const { error } = await admin.rpc("verify_payment", { p_payment_id: paymentId });
+  if (error) throw new Error(`verify_payment failed: ${error.message}`);
+  return { enrollmentId, invoiceId, paymentId };
+}
+
 /** Schedules a lesson of `minutes` (default 90) through create_lesson and returns its id. */
 export async function lesson(caller: SupabaseClient, classId: string, start: Date, minutes = 90): Promise<string> {
   const { data, error } = await caller.rpc("create_lesson", {

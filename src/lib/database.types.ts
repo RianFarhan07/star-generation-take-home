@@ -510,14 +510,29 @@ isOneToOne: false
               "class_id": string,"description": string,"my_enrollment_id": string,"my_enrollment_status": Database["public"]['Enums']["enrollment_status"],"name": string,"package_hours": number,"package_price": number,"seats_left": number,"tutor_name": string
             }[]
                            },
+"log_invoice_event":
+{ Args: { "p_action": string,"p_invoice_id": string,"p_note"?: string }; Returns: undefined
+                           },
 "logbook_class_id":
 { Args: { "p_logbook_id": string }; Returns: string
+                           },
+"mark_invoice_paid":
+{ Args: { "p_invoice_id": string }; Returns: undefined
+                           },
+"mark_paid_offline":
+{ Args: { "p_invoice_id": string,"p_reference": string }; Returns: string
                            },
 "owns_enrollment":
 { Args: { "p_enrollment_id": string }; Returns: boolean
                            },
 "owns_invoice":
 { Args: { "p_invoice_id": string }; Returns: boolean
+                           },
+"reject_payment":
+{ Args: { "p_payment_id": string,"p_reason": string }; Returns: undefined
+                           },
+"report_payment":
+{ Args: { "p_amount": number,"p_bank": string,"p_invoice_id": string,"p_proof_path"?: string,"p_sender_name": string,"p_transfer_date": string }; Returns: string
                            },
 "require_admin":
 { Args: Record<PropertyKey, never>; Returns: undefined
@@ -539,6 +554,9 @@ isOneToOne: false
                            },
 "update_lesson_time":
 { Args: { "p_ends_at": string,"p_lesson_id": string,"p_starts_at": string }; Returns: undefined
+                           },
+"verify_payment":
+{ Args: { "p_payment_id": string }; Returns: undefined
                            }
           }
           Enums: {
