@@ -40,6 +40,17 @@ export async function enroll(student: SupabaseClient, classId: string): Promise<
   return { enrollmentId, invoiceId: invoice.data.id as string };
 }
 
+/** Schedules a lesson of `minutes` (default 90) through create_lesson and returns its id. */
+export async function lesson(caller: SupabaseClient, classId: string, start: Date, minutes = 90): Promise<string> {
+  const { data, error } = await caller.rpc("create_lesson", {
+    p_class_id: classId,
+    p_starts_at: start.toISOString(),
+    p_ends_at: new Date(start.getTime() + minutes * 60_000).toISOString(),
+  });
+  if (error) throw new Error(`create_lesson failed: ${error.message}`);
+  return data as string;
+}
+
 /** A moment `days` from now at `hourWib`:00 WIB (negative days = the past). */
 export function daysFromNow(days: number, hourWib = 16): Date {
   const wibNow = new Date(Date.now() + 7 * 3600_000);

@@ -450,11 +450,20 @@ isOneToOne: false
             "auth_role":
 { Args: Record<PropertyKey, never>; Returns: Database["public"]['Enums']["user_role"]
                            },
+"can_manage_lessons":
+{ Args: { "p_class_id": string }; Returns: boolean
+                           },
+"cancel_lesson":
+{ Args: { "p_lesson_id": string,"p_reason": string }; Returns: undefined
+                           },
 "cancel_pending_enrollment":
 { Args: { "p_enrollment_id": string }; Returns: undefined
                            },
 "create_class":
 { Args: { "p_capacity": number,"p_description": string,"p_name": string,"p_package_hours": number,"p_student_rate": number,"p_tutor_id": string,"p_tutor_rate": number }; Returns: string
+                           },
+"create_lesson":
+{ Args: { "p_class_id": string,"p_ends_at": string,"p_starts_at": string }; Returns: string
                            },
 "current_class_rate":
 { Args: { "p_at"?: string,"p_class_id": string }; Returns: {
@@ -527,6 +536,9 @@ isOneToOne: false
                            },
 "update_class_details":
 { Args: { "p_class_id": string,"p_description": string,"p_name": string,"p_package_hours": number }; Returns: undefined
+                           },
+"update_lesson_time":
+{ Args: { "p_ends_at": string,"p_lesson_id": string,"p_starts_at": string }; Returns: undefined
                            }
           }
           Enums: {
