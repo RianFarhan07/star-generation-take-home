@@ -3,17 +3,22 @@
 // supabase-js infers a row type from the select string. For embedded relations that inference does not
 // match how we use the data, so these helpers take the raw result and the page names the shape it expects.
 
+function failure(message: string): Error {
+  console.error(`Query failed: ${message}`);
+  return new Error(process.env.NODE_ENV === "production" ? "Could not load this page. Please try again." : message);
+}
+
 type Result = { data: unknown; error: { message: string } | null };
 
-/** The rows of a query, or a thrown error that names what went wrong (shown by Next's error page). */
+/** The rows of a query. A failed query is logged on the server; the page error stays generic in production. */
 export function rows<T>(result: Result): T[] {
-  if (result.error) throw new Error(result.error.message);
+  if (result.error) throw failure(result.error.message);
   return (result.data ?? []) as T[];
 }
 
 /** The single row of a query (or null), throwing on an error. */
 export function one<T>(result: Result): T | null {
-  if (result.error) throw new Error(result.error.message);
+  if (result.error) throw failure(result.error.message);
   return (result.data ?? null) as T | null;
 }
 

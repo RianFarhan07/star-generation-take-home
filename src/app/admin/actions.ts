@@ -1,5 +1,6 @@
 "use server";
 
+import { requireRole } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { callRpc, callRpcResult, int, rupiah, text, type ActionState } from "@/lib/actions";
 import { wibInputToUtcIso } from "@/lib/time";
@@ -11,6 +12,7 @@ const need = (message: string): ActionState => ({ ok: false, error: message });
 // ----------------------------------------------------------------------------- classes
 
 export async function createClass(_state: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole("admin");
   const studentRate = rupiah(formData, "studentRate");
   const tutorRate = rupiah(formData, "tutorRate");
   const capacity = int(formData, "capacity");
@@ -36,6 +38,7 @@ export async function createClass(_state: ActionState, formData: FormData): Prom
 }
 
 export async function updateClassDetails(_state: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole("admin");
   const packageHours = int(formData, "packageHours");
   if (packageHours === null) return need("Package hours must be a whole number.");
   const id = text(formData, "classId");
@@ -48,6 +51,7 @@ export async function updateClassDetails(_state: ActionState, formData: FormData
 }
 
 export async function setClassRates(_state: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole("admin");
   const studentRate = rupiah(formData, "studentRate");
   const tutorRate = rupiah(formData, "tutorRate");
   if (studentRate === null || tutorRate === null) return need("Enter both rates as whole rupiah amounts, for example 150.000.");
@@ -61,6 +65,7 @@ export async function setClassRates(_state: ActionState, formData: FormData): Pr
 }
 
 export async function setClassCapacity(_state: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole("admin");
   const capacity = int(formData, "capacity");
   if (capacity === null) return need("Capacity must be a whole number.");
   const id = text(formData, "classId");
@@ -68,6 +73,7 @@ export async function setClassCapacity(_state: ActionState, formData: FormData):
 }
 
 export async function changeClassTutor(_state: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole("admin");
   const id = text(formData, "classId");
   return callRpc(
     "change_class_tutor",
@@ -80,6 +86,7 @@ export async function changeClassTutor(_state: ActionState, formData: FormData):
 // ----------------------------------------------------------------------------- lessons
 
 export async function addLesson(_state: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole("admin");
   const id = text(formData, "classId");
   let startsAt: string;
   let endsAt: string;
@@ -93,6 +100,7 @@ export async function addLesson(_state: ActionState, formData: FormData): Promis
 }
 
 export async function cancelLesson(_state: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole("admin");
   const id = text(formData, "classId");
   return callRpc("cancel_lesson", { p_lesson_id: text(formData, "lessonId"), p_reason: text(formData, "reason") }, [`/admin/classes/${id}`]);
 }
@@ -100,6 +108,7 @@ export async function cancelLesson(_state: ActionState, formData: FormData): Pro
 // ----------------------------------------------------------------------------- students and enrollments
 
 export async function withdrawEnrollment(_state: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole("admin");
   return callRpc(
     "withdraw_enrollment",
     { p_enrollment_id: text(formData, "enrollmentId"), p_cause: text(formData, "cause"), p_reason: text(formData, "reason") },
@@ -108,6 +117,7 @@ export async function withdrawEnrollment(_state: ActionState, formData: FormData
 }
 
 export async function exceptionRefund(_state: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole("admin");
   const amount = rupiah(formData, "amount");
   if (amount === null) return need("Enter the refund amount as whole rupiah, for example 500.000.");
   return callRpc(
@@ -118,6 +128,7 @@ export async function exceptionRefund(_state: ActionState, formData: FormData): 
 }
 
 export async function issueRenewal(_state: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole("admin");
   return callRpc("issue_renewal_invoice", { p_enrollment_id: text(formData, "enrollmentId") }, ["/admin/students", "/admin/invoices"], "Renewal invoice issued.");
 }
 
@@ -126,10 +137,12 @@ export async function issueRenewal(_state: ActionState, formData: FormData): Pro
 const invoicePaths = (invoiceId: string) => ["/admin/invoices", `/admin/invoices/${invoiceId}`, "/admin/students", "/admin"];
 
 export async function verifyPayment(_state: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole("admin");
   return callRpc("verify_payment", { p_payment_id: text(formData, "paymentId") }, invoicePaths(text(formData, "invoiceId")), "Payment verified.");
 }
 
 export async function rejectPayment(_state: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole("admin");
   return callRpc(
     "reject_payment",
     { p_payment_id: text(formData, "paymentId"), p_reason: text(formData, "reason") },
@@ -138,6 +151,7 @@ export async function rejectPayment(_state: ActionState, formData: FormData): Pr
 }
 
 export async function markPaidOffline(_state: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole("admin");
   return callRpc(
     "mark_paid_offline",
     { p_invoice_id: text(formData, "invoiceId"), p_reference: text(formData, "reference") },
@@ -147,6 +161,7 @@ export async function markPaidOffline(_state: ActionState, formData: FormData): 
 }
 
 export async function reversePayment(_state: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole("admin");
   return callRpc(
     "reverse_payment",
     { p_invoice_id: text(formData, "invoiceId"), p_reason: text(formData, "reason") },
@@ -155,6 +170,7 @@ export async function reversePayment(_state: ActionState, formData: FormData): P
 }
 
 export async function adjustInvoiceHours(_state: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole("admin");
   const hours = int(formData, "hours");
   if (hours === null) return need("Hours must be a whole number.");
   return callRpc(
@@ -167,10 +183,12 @@ export async function adjustInvoiceHours(_state: ActionState, formData: FormData
 // ----------------------------------------------------------------------------- refunds
 
 export async function markRefunded(_state: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole("admin");
   return callRpc("mark_refunded", { p_refund_id: text(formData, "refundId"), p_bank_reference: text(formData, "reference") }, ["/admin/refunds", "/admin"]);
 }
 
 export async function cancelRefund(_state: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole("admin");
   return callRpc("cancel_refund", { p_refund_id: text(formData, "refundId"), p_reason: text(formData, "reason") }, ["/admin/refunds", "/admin"]);
 }
 
@@ -179,6 +197,7 @@ export async function cancelRefund(_state: ActionState, formData: FormData): Pro
 const logbookPaths = (logbookId: string) => ["/admin/logbooks", `/admin/logbooks/${logbookId}`, "/admin"];
 
 export async function approveLogbook(_state: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole("admin");
   const id = text(formData, "logbookId");
   return callRpc("approve_logbook", { p_logbook_id: id }, logbookPaths(id), (created) =>
     created === 0 ? "Already approved. Nothing was added." : `Logbook approved. ${created as number} earning(s) recorded.`,
@@ -186,6 +205,7 @@ export async function approveLogbook(_state: ActionState, formData: FormData): P
 }
 
 export async function requestLogbookChanges(_state: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole("admin");
   const id = text(formData, "logbookId");
   const flagged = formData.getAll("flagged").map(String);
   return callRpc(
@@ -197,6 +217,7 @@ export async function requestLogbookChanges(_state: ActionState, formData: FormD
 }
 
 export async function editLogbookEntry(_state: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole("admin");
   const id = text(formData, "logbookId");
   return callRpc(
     "admin_edit_entry",
