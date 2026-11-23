@@ -127,6 +127,20 @@ describe("a student reports a transfer, the admin verifies it", () => {
   });
 });
 
+describe("proof files", () => {
+  it("accepts a proof path in the student's own folder and refuses one pointing elsewhere", async () => {
+    const { classId } = await setup();
+    const student = await makeUser("student");
+    const other = await makeUser("student");
+    const { invoiceId } = await enroll(student.client, classId);
+    const base = { p_invoice_id: invoiceId, p_sender_name: "Budi", p_bank: "BCA", p_transfer_date: "2026-11-24", p_amount: 1800000 };
+    await expectCode(student.client.rpc("report_payment", { ...base, p_proof_path: `${other.id}/someone-elses.png` }), "VALIDATION");
+    await expectCode(student.client.rpc("report_payment", { ...base, p_proof_path: "../../secret.png" }), "VALIDATION");
+    const { error } = await student.client.rpc("report_payment", { ...base, p_proof_path: `${student.id}/${invoiceId}-1.png` });
+    expect(error).toBeNull();
+  });
+});
+
 describe("verification guards", () => {
   it("refuses to verify a transfer that is less than the invoice amount, but accepts the exact amount", async () => {
     const { admin, classId } = await setup();
