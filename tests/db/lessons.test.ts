@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { expectCode, makeUser, serviceClient } from "../helpers/clients";
-import { adminClient, createClass, daysFromNow, lesson } from "../helpers/fixtures";
-import { wibInputToUtcIso } from "../../src/lib/time";
+import { adminClient, createClass, daysFromNow, enrollAndPay, lesson } from "../helpers/fixtures";
+import { wibInputToUtcIso, wibMonthStart } from "../../src/lib/time";
 
 async function setup() {
   const admin = await adminClient();
@@ -79,6 +79,48 @@ describe("a tutor's lessons cannot overlap", () => {
       p_ends_at: new Date(start.getTime() + 105 * 60_000).toISOString(),
     });
     expect(replacement.error).toBeNull();
+  });
+});
+
+describe("removed entries stay private", () => {
+  it("keeps the text of an entry removed by a cancellation in an admin-only table, never on the lesson row", async () => {
+    const admin = await adminClient();
+    const tutor = await makeUser("tutor");
+    const classId = await createClass(admin, { tutorId: tutor.id });
+    const student = await makeUser("student");
+    await enrollAndPay(student.client, admin, classId);
+    const start = daysFromNow(-2);
+    const lessonId = await lesson(tutor.client, classId, start);
+
+    // A draft logbook with an entry for that (ended) lesson, written with the service role because the
+    // entry functions come later; this is the private draft text that must not leak.
+    const service = serviceClient();
+    const logbook = await service
+      .from("logbooks")
+      .insert({ class_id: classId, month: wibMonthStart(start.toISOString()) })
+      .select("id")
+      .single();
+    expect(logbook.error).toBeNull();
+    const entry = await service.from("logbook_entries").insert({
+      logbook_id: logbook.data!.id, lesson_id: lessonId, author_id: tutor.id,
+      topic: "Secret draft topic", activities: "a", observation: "b", recommendation: "c",
+    });
+    expect(entry.error).toBeNull();
+
+    const { error } = await tutor.client.rpc("cancel_lesson", { p_lesson_id: lessonId, p_reason: "did not happen" });
+    expect(error).toBeNull();
+    expect((await service.from("logbook_entries").select().eq("lesson_id", lessonId)).data).toEqual([]);
+
+    for (const who of [tutor, student]) {
+      const rows = await who.client.from("lessons").select("*").eq("id", lessonId);
+      expect(rows.data).toHaveLength(1);
+      expect(rows.data![0]).not.toHaveProperty("cancelled_entry_snapshot");
+      expect(JSON.stringify(rows.data)).not.toContain("Secret draft topic");
+      expect((await who.client.from("cancelled_lesson_snapshots").select()).data).toEqual([]);
+    }
+    const kept = await admin.from("cancelled_lesson_snapshots").select("snapshot").eq("lesson_id", lessonId);
+    expect(kept.data).toHaveLength(1);
+    expect(JSON.stringify(kept.data![0].snapshot)).toContain("Secret draft topic");
   });
 });
 
