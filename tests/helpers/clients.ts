@@ -33,6 +33,11 @@ export async function signIn(email: string, password = PASSWORD): Promise<Supaba
   return client;
 }
 
+/** Client with no session at all (what an anonymous visitor would use). */
+export function anonClient(): SupabaseClient {
+  return createClient(env("NEXT_PUBLIC_SUPABASE_URL"), env("NEXT_PUBLIC_SUPABASE_ANON_KEY"), noSession);
+}
+
 /** Service-role client. Only for creating users and time-travel fixtures inside tests. */
 export function serviceClient(): SupabaseClient {
   return createClient(env("NEXT_PUBLIC_SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"), noSession);

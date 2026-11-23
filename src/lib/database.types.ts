@@ -447,7 +447,81 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            [_ in never]: never
+            "auth_role":
+{ Args: Record<PropertyKey, never>; Returns: Database["public"]['Enums']["user_role"]
+                           },
+"create_class":
+{ Args: { "p_capacity": number,"p_description": string,"p_name": string,"p_package_hours": number,"p_student_rate": number,"p_tutor_id": string,"p_tutor_rate": number }; Returns: string
+                           },
+"current_class_rate":
+{ Args: { "p_at"?: string,"p_class_id": string }; Returns: {
+              "class_id": string,
+"created_at": string,
+"created_by": string | null,
+"effective_from": string,
+"id": string,
+"student_rate_per_hour": number,
+"tutor_rate_per_hour": number
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "class_rates"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"entry_class_id":
+{ Args: { "p_entry_id": string }; Returns: string
+                           },
+"fail":
+{ Args: { "p_code": string,"p_message": string }; Returns: undefined
+                           },
+"has_active_enrollment":
+{ Args: { "p_class_id": string }; Returns: boolean
+                           },
+"has_any_enrollment":
+{ Args: { "p_class_id": string }; Returns: boolean
+                           },
+"is_admin":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"is_class_tutor":
+{ Args: { "p_class_id": string }; Returns: boolean
+                           },
+"lesson_month":
+{ Args: { "p_ts": string }; Returns: string
+                           },
+"list_open_classes":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "class_id": string,"description": string,"my_enrollment_id": string,"my_enrollment_status": Database["public"]['Enums']["enrollment_status"],"name": string,"package_hours": number,"package_price": number,"seats_left": number,"tutor_name": string
+            }[]
+                           },
+"logbook_class_id":
+{ Args: { "p_logbook_id": string }; Returns: string
+                           },
+"owns_enrollment":
+{ Args: { "p_enrollment_id": string }; Returns: boolean
+                           },
+"owns_invoice":
+{ Args: { "p_invoice_id": string }; Returns: boolean
+                           },
+"require_admin":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"set_class_capacity":
+{ Args: { "p_capacity": number,"p_class_id": string }; Returns: undefined
+                           },
+"set_class_rates":
+{ Args: { "p_class_id": string,"p_student_rate": number,"p_tutor_rate": number }; Returns: undefined
+                           },
+"shares_class_with":
+{ Args: { "p_profile_id": string }; Returns: boolean
+                           },
+"teaches_in_class":
+{ Args: { "p_class_id": string }; Returns: boolean
+                           },
+"update_class_details":
+{ Args: { "p_class_id": string,"p_description": string,"p_name": string,"p_package_hours": number }; Returns: undefined
+                           }
           }
           Enums: {
             "end_cause": "student"|"business"|"expired"|"rejected"|"not_renewed","enrollment_status": "pending_payment"|"awaiting_verification"|"active"|"cancelled"|"withdrawn","invoice_kind": "initial"|"renewal","invoice_status": "unpaid"|"awaiting_verification"|"paid"|"cancelled","lesson_status": "scheduled"|"cancelled","logbook_status": "draft"|"submitted"|"changes_requested"|"approved","payment_kind": "transfer_report"|"offline","payment_status": "pending"|"verified"|"rejected"|"reversed","refund_cause": "business"|"exception"|"late_no_seat","refund_status": "pending"|"refunded"|"cancelled","review_action": "submitted"|"changes_requested"|"admin_edited"|"approved","user_role": "admin"|"tutor"|"student"
