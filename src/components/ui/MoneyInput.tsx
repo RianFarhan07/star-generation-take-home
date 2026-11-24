@@ -4,20 +4,24 @@ import type { InputHTMLAttributes } from "react";
 import { formatGrouped } from "@/lib/money";
 import { Input } from "./Field";
 
-/** Puts the caret back after the same number of digits it was after before the text was regrouped. */
-function regroup(input: HTMLInputElement) {
+const CLEAN = /^\d{1,3}(\.\d{3})*$/; // a number whose dots are all proper thousands separators
+
+/** Regroups what was typed and puts the caret back after the same number of digits it was after before. */
+function regroup(input: HTMLInputElement, afterDelete: boolean) {
   const caret = input.selectionStart ?? input.value.length;
   const digitsBeforeCaret = input.value.slice(0, caret).replace(/\D/g, "").length;
-  const grouped = formatGrouped(input.value);
-  if (grouped === input.value) return;
-  input.value = grouped;
-  let position = 0;
-  let seen = 0;
-  while (position < grouped.length && seen < digitsBeforeCaret) {
-    if (/\d/.test(grouped[position])) seen += 1;
-    position += 1;
+  const grouped = formatGrouped(input.value, { afterDelete });
+  if (grouped !== input.value) {
+    input.value = grouped;
+    let position = 0;
+    let seen = 0;
+    while (position < grouped.length && seen < digitsBeforeCaret) {
+      if (/\d/.test(grouped[position])) seen += 1;
+      position += 1;
+    }
+    input.setSelectionRange(position, position);
   }
-  input.setSelectionRange(position, position);
+  input.dataset.clean = CLEAN.test(input.value) ? "1" : "0";
 }
 
 /**
@@ -30,8 +34,12 @@ export function MoneyInput({ defaultValue, onInput, ...props }: Omit<InputHTMLAt
       inputMode="numeric"
       autoComplete="off"
       defaultValue={defaultValue === undefined ? undefined : formatGrouped(String(defaultValue))}
+      data-clean={defaultValue !== undefined && CLEAN.test(formatGrouped(String(defaultValue))) ? "1" : "0"}
       onInput={(event) => {
-        regroup(event.currentTarget);
+        const input = event.currentTarget;
+        // A deletion in a cleanly grouped number is regrouped; in anything else the text is left as typed.
+        const deleted = (event.nativeEvent as InputEvent).inputType?.startsWith("delete") ?? false;
+        regroup(input, deleted && input.dataset.clean === "1");
         onInput?.(event);
       }}
       {...props}
