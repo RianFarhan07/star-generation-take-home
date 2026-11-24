@@ -4,7 +4,6 @@ import { Card, EmptyState, PageHeader } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { formatRupiah } from "@/lib/money";
 import { createClient } from "@/lib/supabase/server";
-import { formatWib } from "@/lib/time";
 import { enrollInClass, joinWaitlist, leaveWaitlist } from "../actions";
 
 type OpenClass = {
@@ -19,7 +18,6 @@ type OpenClass = {
   my_enrollment_status: string | null;
   on_waitlist: boolean;
   waitlist_position: number | null;
-  offer_until: string | null;
 };
 
 const LIVE = ["pending_payment", "awaiting_verification", "active"];
@@ -88,20 +86,19 @@ export default async function BrowseClassesPage() {
                           triggerLabel="Join waitlist"
                           triggerVariant="primary"
                           title={`Join the waitlist for ${c.name}`}
-                          description="When a seat opens up, the first student in line gets it reserved for 24 hours and a notification."
+                          description={`When a seat opens up, the first student in line is enrolled right away: we create your ${formatRupiah(c.package_price)} invoice (${c.package_hours} hours) and tell you. You then have 24 hours to pay, or the seat goes to the next student.`}
                           confirmLabel="Join waitlist"
                           action={joinWaitlist}
                           values={{ classId: c.class_id }}
-                        />
+                        >
+                          <label className="flex items-start gap-2 text-sm">
+                            <input type="checkbox" name="accept" required className="mt-1" />
+                            <span>I understand there is no refund if I withdraw from the class.</span>
+                          </label>
+                        </ConfirmDialog>
                       </div>
                     )
                   ) : (
-                    <>
-                    {c.offer_until ? (
-                      <p className="mb-2 rounded-card bg-gold/15 p-2 text-sm font-semibold">
-                        A seat is reserved for you until {formatWib(c.offer_until)}.
-                      </p>
-                    ) : null}
                     <ConfirmDialog
                       triggerLabel="Enroll"
                       triggerVariant="primary"
@@ -116,7 +113,6 @@ export default async function BrowseClassesPage() {
                         <span>I understand there is no refund if I withdraw from the class.</span>
                       </label>
                     </ConfirmDialog>
-                    </>
                   )}
                 </div>
               </Card>

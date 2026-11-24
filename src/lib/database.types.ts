@@ -489,14 +489,14 @@ isOneToOne: false
                   ]
                 },"waitlist": {
                   Row: {
-                    "class_id": string,"created_at": string,"id": string,"offered_until": string | null,"student_id": string
+                    "class_id": string,"created_at": string,"id": string,"student_id": string,"terms_accepted_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "class_id": string,"created_at"?: string,"id"?: string,"offered_until"?: string | null,"student_id": string
+                    "class_id": string,"created_at"?: string,"id"?: string,"student_id": string,"terms_accepted_at": string
                   }
                   Update: {
-                    "class_id"?: string,"created_at"?: string,"id"?: string,"offered_until"?: string | null,"student_id"?: string
+                    "class_id"?: string,"created_at"?: string,"id"?: string,"student_id"?: string,"terms_accepted_at"?: string
                   }
                   Relationships: [
                     {
@@ -524,6 +524,12 @@ isOneToOne: false
               "low_hours": boolean,"next_lesson_covered": boolean,"next_lesson_id": string,"out_of_hours": boolean,"purchased_minutes": number,"remaining_minutes": number,"remaining_value": number,"used_minutes": number
             }[]
                            },
+"_enroll_from_waitlist":
+{ Args: { "p_class_id": string,"p_now"?: string }; Returns: number
+                           },
+"_enroll_student":
+{ Args: { "p_actor": string,"p_class_id": string,"p_note": string,"p_now": string,"p_student_id": string,"p_terms_at": string }; Returns: string
+                           },
 "_ledger":
 { Args: { "p_enrollment_id": string,"p_now"?: string }; Returns: Database["public"]['CompositeTypes']["ledger_row"][]
                           SetofOptions: {
@@ -532,9 +538,6 @@ isOneToOne: false
         isOneToOne: false
         isSetofReturn: true
       } },
-"_offer_free_seats":
-{ Args: { "p_class_id": string,"p_now"?: string }; Returns: undefined
-                           },
 "_remaining_minutes":
 { Args: { "p_enrollment_id": string,"p_now"?: string }; Returns: number
                            },
@@ -555,6 +558,9 @@ isOneToOne: false
                            },
 "auth_role":
 { Args: Record<PropertyKey, never>; Returns: Database["public"]['Enums']["user_role"]
+                           },
+"can_change_lesson":
+{ Args: { "p_class_id": string,"p_lesson_tutor_id": string }; Returns: boolean
                            },
 "can_manage_lessons":
 { Args: { "p_class_id": string }; Returns: boolean
@@ -648,7 +654,7 @@ isOneToOne: false
 { Args: { "p_enrollment_id": string }; Returns: string
                            },
 "join_waitlist":
-{ Args: { "p_class_id": string }; Returns: undefined
+{ Args: { "p_accept_terms": boolean,"p_class_id": string }; Returns: undefined
                            },
 "leave_waitlist":
 { Args: { "p_class_id": string }; Returns: undefined
@@ -663,7 +669,7 @@ isOneToOne: false
                            },
 "list_open_classes":
 { Args: Record<PropertyKey, never>; Returns: {
-              "class_id": string,"description": string,"my_enrollment_id": string,"my_enrollment_status": Database["public"]['Enums']["enrollment_status"],"name": string,"offer_until": string,"on_waitlist": boolean,"package_hours": number,"package_price": number,"seats_left": number,"tutor_name": string,"waitlist_position": number
+              "class_id": string,"description": string,"my_enrollment_id": string,"my_enrollment_status": Database["public"]['Enums']["enrollment_status"],"name": string,"on_waitlist": boolean,"package_hours": number,"package_price": number,"seats_left": number,"tutor_name": string,"waitlist_position": number
             }[]
                            },
 "log_invoice_event":

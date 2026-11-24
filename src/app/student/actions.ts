@@ -68,7 +68,12 @@ export async function withdraw(_state: ActionState, formData: FormData): Promise
 
 export async function joinWaitlist(_state: ActionState, formData: FormData): Promise<ActionState> {
   await requireRole("student");
-  return callRpc("join_waitlist", { p_class_id: text(formData, "classId") }, ["/student/classes"], "You are on the waitlist. We will tell you when a seat opens up.");
+  return callRpc(
+    "join_waitlist",
+    { p_class_id: text(formData, "classId"), p_accept_terms: formData.get("accept") === "on" },
+    ["/student/classes"],
+    "You are on the waitlist. When a seat opens up, we create your invoice and tell you.",
+  );
 }
 
 export async function leaveWaitlist(_state: ActionState, formData: FormData): Promise<ActionState> {
