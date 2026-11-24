@@ -235,11 +235,16 @@ After building, the owner used the app and these came out of it. Each one names 
 - **Notifications act when clicked** (everyone): a click marks the notification as read and opens what it is about.
 - **Errors that point somewhere** (admin, students): asking for a renewal invoice while one is open links to that
   invoice, and the Students table shows *Open invoice* instead of a button that cannot work.
-- **Not built, and why.** *Short payments:* when a transfer is less than the invoice the admin can only reject it,
-  which releases the seat of a first invoice, and the money that did arrive is not recorded anywhere. Three better
-  routes were worked out (record partial payments; return the invoice to the student to report the total; let the
-  admin record the rest as paid outside the app) and the choice is open. *A calendar view of the tutor's schedule* is
-  on hold.
+- **A short transfer goes back to the student** (students, and admins who no longer have to cancel a seat). When a
+  student reports less than the invoice, a dialog first shows what is missing and what that means, and lets them fix
+  the amount or report anyway. The admin sees the shortfall and a ready-to-send message instead of an error on
+  *Verify*, and can *Return to student*: the report is marked rejected with the reason, the invoice goes back to
+  unpaid and the seat stays held for 24 more hours, so the student transfers the rest and reports the total.
+  Rejecting stays the way to say "not on the bank statement" (the seat is released). *Considered:* recording partial
+  payments (the most correct, but it changes verification, invoice status, refunds and the finance figures);
+  letting the admin record the rest as paid outside the app. *Left out:* the money of the first, short transfer is
+  not recorded as its own payment; the admin matches both transfers against the bank statement.
+- **Not built.** A calendar view of the tutor's schedule is on hold.
 
 ## Known weaknesses
 
@@ -254,8 +259,8 @@ After building, the owner used the app and these came out of it. Each one names 
   admin has to cancel the lesson, which says it did not happen even though it did. Nobody can write an entry on
   someone else's behalf, on purpose (see 4), so there is no gentler way out.
 - Monthly logbooks have no submission deadline and no reminder; nothing tells a tutor that a month is waiting.
-- A transfer shorter than the invoice cannot be accepted in part: the admin can only reject it (which releases the
-  seat of a first invoice), and the money that did arrive is not recorded anywhere, so it has to be repaid by hand.
+- A short transfer is returned to the student, but the money that did arrive is not recorded as its own payment: the
+  student reports the total of both transfers and the admin matches them against the bank statement.
 - Payments are simulated; a screenshot is not proof, only a hint for the admin.
 - Badge text uses the brief's exact colours, which is below AA contrast for small white text (see ARCHITECTURE.md).
 - The seeded accounts share one documented password; a deployed copy should turn off the demo-login list and

@@ -70,7 +70,9 @@ Leave it off, and change the seeded passwords, for anything that is deployed.
    locked at once and an invoice with a 24 hour countdown appears. Press *I have paid* and fill the form
    (a proof image is optional). Now sign in as Citra: the class is **full**.
 4. **Verify.** As the admin, *Overview* shows Sari's transfer under *Needs attention*. Open it and verify it;
-   Sari now sees the schedule, her hours and approved logbooks. (Reject it instead to see the seat released.)
+   Sari now sees the schedule, her hours and approved logbooks. (Reject it instead to see the seat released. Or report
+   a transfer that is too small: Sari gets a warning first, and the admin can *Return to student* with a ready message,
+   which keeps the seat for 24 more hours.)
 5. **Hours running out.** Sign in as Budi: *Low hours* and a renewal invoice. The admin *Overview* lists him too.
    His class page opens with *What's next* from the last approved logbook.
 6. **Waitlist and notifications.** As Citra (class full) press *Join waitlist* (accepting the no-refund note). As
