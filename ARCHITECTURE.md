@@ -54,6 +54,8 @@ lesson hands the hours back automatically and the figure can never drift.
 | No duplicate enrollment | `core_tables` → partial unique index `enrollments_one_live_per_student`; `fn_enrollment` → `enroll_in_class` |
 | Capacity never exceeded, even for simultaneous requests | `fn_enrollment` → trigger `enrollments_capacity_guard` (locks the class row, counts held seats); tested with parallel requests |
 | End after start; a tutor's lessons never overlap | `core_tables` → `lessons_end_after_start`, exclusion constraint `lessons_no_tutor_overlap`; `fn_lessons` → `create_lesson` |
+| A lesson of a submitted or approved month cannot change | `fn_lessons` → trigger `lessons_month_lock`; the screens hide those buttons with `src/lib/lessonLock.ts` |
+| A lesson is changed only by the tutor who teaches it, or an admin | `lesson_ownership` → `can_change_lesson`, used by `cancel_lesson` and `update_lesson_time` |
 | Times in WIB | `src/lib/time.ts` (input) + `lesson_month()` (month of a lesson) |
 | One logbook per class per month; one entry per lesson; four required fields | `core_tables` → `unique (class_id, month)`, `unique (lesson_id)`, `check (btrim(...) <> '')` |
 | Entry only for a lesson that has ended | `fn_logbooks` → trigger `entries_validity_check` |

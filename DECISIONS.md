@@ -65,7 +65,11 @@ cheap in large classes. A package discount makes student-chosen sizes meaningful
   Nobody is removed silently.
 - *Tutor:* `change_class_tutor` moves only lessons that have not started, in one transaction. Taught lessons,
   their entries and earnings stay with the previous tutor. If a moved lesson would overlap the new tutor's own
-  lessons the whole change is rejected.
+  lessons the whole change is rejected. A lesson belongs to the tutor who teaches it: only that tutor (while they
+  still teach the class) or an admin can cancel or move it (`can_change_lesson`), so the new tutor cannot erase the
+  previous tutor's record and pay. In a month that spans the change each tutor writes the entries of their own
+  lessons, the current tutor submits the month, and an admin can unblock it by cancelling a lesson whose tutor
+  never wrote an entry.
 
 **Considered.** Recalculating unpaid invoices (changes a price already sent); paying the rate in force at
 approval (a rate cut would silently reduce pay for lessons already taught); lowering capacity by removing the
@@ -219,6 +223,10 @@ These are not among the three main improvements; each answers one more sentence 
 - A late transfer on a class that filled up needs the admin to repay by hand (the refund record makes sure it
   is not forgotten).
 - Rate changes cannot be scheduled for a future date; there are no notifications.
+- A month that spans a change of tutor waits for the previous tutor's entries. If that tutor cannot be reached the
+  admin has to cancel the lesson, which says it did not happen even though it did. Nobody can write an entry on
+  someone else's behalf, on purpose (see 4), so there is no gentler way out.
+- Monthly logbooks have no submission deadline and no reminder; nothing tells a tutor that a month is waiting.
 - Payments are simulated; a screenshot is not proof, only a hint for the admin.
 - Badge text uses the brief's exact colours, which is below AA contrast for small white text (see ARCHITECTURE.md).
 - The seeded accounts share one documented password; a deployed copy should turn off the demo-login list and
@@ -227,7 +235,8 @@ These are not among the three main improvements; each answers one more sentence 
 ## What I would build next with another day
 
 1. **Delivery of notifications** beyond the in-app bell (WhatsApp or e-mail), with per-user preferences and
-   reminders before a payment window ends: the product replaces WhatsApp threads, so this is the biggest gap.
+   reminders before a payment window ends and before a logbook month is due: the product replaces WhatsApp
+   threads, so this is the biggest gap.
 2. **Excused absences** as an opt-in per-class quota, switched on once data shows it is worth Rp225,000 per absence.
 3. **Unique transfer codes** (Rp1,800,123) so transfers match the bank statement automatically, then bank
    statement import, then a real payment gateway behind the same verification function.
