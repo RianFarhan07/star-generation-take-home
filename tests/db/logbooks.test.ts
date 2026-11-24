@@ -214,6 +214,28 @@ describe("admin review", () => {
     await expectCode(tutor.client.rpc("admin_edit_entry", { p_entry_id: entryA, ...text("x") }), "NOT_ALLOWED");
   });
 
+  it("keeps only the tutor's text as the previous version however often the admin saves, and starts afresh after the tutor edits again", async () => {
+    const { admin, tutor, entryA, book } = await submitted();
+    // The edit screen saves automatically, so one entry can be saved many times in a row.
+    for (const topic of ["Fractions v1", "Fractions v2", "Fractions v3"]) {
+      expect((await admin.rpc("admin_edit_entry", { p_entry_id: entryA, ...text(topic) })).error).toBeNull();
+    }
+    const revisions = await admin.from("logbook_entry_revisions").select("topic").eq("entry_id", entryA);
+    expect(revisions.data).toEqual([{ topic: "Fractions" }]); // the tutor's original, once
+    const row = await admin.from("logbook_entries").select("topic, edited_by_admin, lesson_id").eq("id", entryA).single();
+    expect(row.data).toMatchObject({ topic: "Fractions v3", edited_by_admin: true });
+
+    // The admin sends it back and the tutor rewrites the entry: it is the tutor's text again.
+    await admin.rpc("request_logbook_changes", { p_logbook_id: book.id, p_comment: "once more" });
+    expect((await tutor.client.rpc("upsert_logbook_entry", { p_lesson_id: row.data!.lesson_id, ...text("Tutor rewrite") })).error).toBeNull();
+    expect((await admin.from("logbook_entries").select("edited_by_admin").eq("id", entryA).single()).data!.edited_by_admin).toBe(false);
+
+    await tutor.client.rpc("submit_logbook", { p_logbook_id: book.id });
+    await admin.rpc("admin_edit_entry", { p_entry_id: entryA, ...text("Admin again") });
+    const all = await admin.from("logbook_entry_revisions").select("topic, edited_at").eq("entry_id", entryA).order("edited_at");
+    expect(all.data!.map((r) => r.topic)).toEqual(["Fractions", "Tutor rewrite"]);
+  });
+
   it("refuses an admin edit unless the logbook is submitted", async () => {
     const { admin, tutor, classId, month } = await setup();
     const entryId = await entry(tutor, await lesson(tutor.client, classId, month.at(5)));
