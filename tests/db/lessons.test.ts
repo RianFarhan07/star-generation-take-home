@@ -162,13 +162,15 @@ describe("who may schedule and cancel", () => {
   });
 
   it("does not let a replaced tutor cancel lessons of a class they no longer teach", async () => {
-    const { tutor: formerTutor, classId } = await setup();
+    const { admin, tutor: formerTutor, classId } = await setup();
     const id = await lesson(formerTutor.client, classId, daysFromNow(-2));
     const successor = await makeUser("tutor");
     const { error: swapError } = await serviceClient().from("classes").update({ tutor_id: successor.id }).eq("id", classId);
     expect(swapError).toBeNull();
     await expectCode(formerTutor.client.rpc("cancel_lesson", { p_lesson_id: id, p_reason: "no longer mine" }), "NOT_ALLOWED");
-    const { error } = await successor.client.rpc("cancel_lesson", { p_lesson_id: id, p_reason: "it did not happen" });
+    // A lesson belongs to the tutor who taught it: the successor cannot erase it, an admin can.
+    await expectCode(successor.client.rpc("cancel_lesson", { p_lesson_id: id, p_reason: "it did not happen" }), "NOT_ALLOWED");
+    const { error } = await admin.rpc("cancel_lesson", { p_lesson_id: id, p_reason: "it did not happen" });
     expect(error).toBeNull();
   });
 

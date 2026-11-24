@@ -15,6 +15,7 @@ const INTERNAL: [string, Record<string, unknown>][] = [
   ["current_class_rate", { p_class_id: ID }],
   ["enrollment_access", { p_enrollment_id: ID }],
   ["can_manage_lessons", { p_class_id: ID }],
+  ["can_change_lesson", { p_class_id: ID, p_lesson_tutor_id: ID }],
   ["create_renewal_invoice", { p_enrollment_id: ID, p_actor: ID }],
   ["mark_invoice_paid", { p_invoice_id: ID }],
   ["log_invoice_event", { p_invoice_id: ID, p_action: "x" }],
