@@ -76,6 +76,35 @@ export default async function LogbookReviewPage({ params }: { params: Promise<{ 
   const submitted = logbook.status === "submitted";
   const tutorNames = [...new Set(preview.map((p) => p.tutor_name))].join(", ");
 
+  // A logbook is reviewed as a whole month, so "request changes" always sends the month back. The button in
+  // an entry's card only opens the same dialog with that entry already flagged.
+  const requestChangesDialog = (preflaggedEntryId: string | null) => (
+    <ConfirmDialog
+      triggerLabel="Request changes"
+      triggerVariant="secondary"
+      title="Send this logbook back to the tutor"
+      description={
+        preflaggedEntryId
+          ? "The whole month goes back to the tutor, who can edit and submit again. This entry is already flagged; you can flag more."
+          : "The tutor can edit and submit again. You can flag the entries that need attention."
+      }
+      confirmLabel="Send back"
+      reasonLabel="Comment for the tutor"
+      action={requestLogbookChanges}
+      values={{ logbookId: logbook.id }}
+    >
+      <fieldset className="space-y-1">
+        <legend className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted">Flag entries (optional)</legend>
+        {entries.map((e) => (
+          <label key={e.id} className="flex items-center gap-2 text-sm">
+            <input type="checkbox" name="flagged" value={e.id} defaultChecked={e.id === preflaggedEntryId} />
+            {embedded(e.lesson) ? formatWib(embedded(e.lesson)!.starts_at) : ""} · {e.topic}
+          </label>
+        ))}
+      </fieldset>
+    </ConfirmDialog>
+  );
+
   return (
     <>
       <PageHeader
@@ -91,26 +120,7 @@ export default async function LogbookReviewPage({ params }: { params: Promise<{ 
             <Badge status={logbook.status} />
             {submitted ? (
               <>
-                <ConfirmDialog
-                  triggerLabel="Request changes"
-                  triggerVariant="secondary"
-                  title="Send this logbook back to the tutor"
-                  description="The tutor can edit and submit again. You can flag the entries that need attention."
-                  confirmLabel="Send back"
-                  reasonLabel="Comment for the tutor"
-                  action={requestLogbookChanges}
-                  values={{ logbookId: logbook.id }}
-                >
-                  <fieldset className="space-y-1">
-                    <legend className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted">Flag entries (optional)</legend>
-                    {entries.map((e) => (
-                      <label key={e.id} className="flex items-center gap-2 text-sm">
-                        <input type="checkbox" name="flagged" value={e.id} />
-                        {embedded(e.lesson) ? formatWib(embedded(e.lesson)!.starts_at) : ""} · {e.topic}
-                      </label>
-                    ))}
-                  </fieldset>
-                </ConfirmDialog>
+                {requestChangesDialog(null)}
                 <ConfirmDialog
                   triggerLabel="Approve"
                   triggerVariant="primary"
@@ -140,7 +150,14 @@ export default async function LogbookReviewPage({ params }: { params: Promise<{ 
                 <Card key={e.id}>
                   <CardHeader
                     title={`${lesson ? formatWib(lesson.starts_at) : ""} · ${e.topic}`}
-                    actions={e.edited_by_admin ? <Badge status="pending" label="Edited by admin" /> : undefined}
+                    actions={
+                      e.edited_by_admin || submitted ? (
+                        <div className="flex items-center gap-2">
+                          {e.edited_by_admin ? <Badge status="pending" label="Edited by admin" /> : null}
+                          {submitted ? requestChangesDialog(e.id) : null}
+                        </div>
+                      ) : undefined
+                    }
                   />
                   <dl className="space-y-3 p-4 text-sm">
                     <div>

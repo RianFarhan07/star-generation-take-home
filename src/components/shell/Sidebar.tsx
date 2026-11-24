@@ -48,7 +48,10 @@ export function Sidebar({
         </button>
       </div>
 
-      <aside className={`${open ? "flex" : "hidden"} w-full shrink-0 flex-col bg-navy text-white md:flex md:min-h-screen md:w-64`}>
+      {/* On wide screens the sidebar is as tall as the window and stays put while the page scrolls. */}
+      <aside
+        className={`${open ? "flex" : "hidden"} w-full shrink-0 flex-col bg-navy text-white md:sticky md:top-0 md:flex md:h-screen md:w-64 md:self-start md:overflow-y-auto`}
+      >
         <div className="hidden px-5 py-5 text-lg font-bold md:block">
           Star <span className="text-gold">Generation</span>
         </div>
@@ -92,7 +95,7 @@ export function Sidebar({
             ) : null}
           </Link>
         </div>
-        <div className="border-t border-white/15 px-5 py-4 text-sm">
+        <div className="mt-auto border-t border-white/15 px-5 py-4 text-sm">
           <div className="font-semibold">{userName}</div>
           <div className="text-xs text-white/60">{roleLabel}</div>
           <form action={signOut} className="mt-2">
