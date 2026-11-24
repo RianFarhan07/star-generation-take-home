@@ -5,7 +5,7 @@ import type { ActionState } from "@/lib/actions";
 import { buttonClass, type ButtonVariant } from "./Button";
 import { Field, Textarea } from "./Field";
 import { SubmitButton } from "./SubmitButton";
-import { FormPendingContext, useActionForm } from "./useActionForm";
+import { useActionForm } from "./useActionForm";
 
 /**
  * A button that opens a confirmation dialog before running a Server Action. With `reasonLabel` the dialog
@@ -34,7 +34,7 @@ export function ConfirmDialog({
   reasonLabel?: string;
   children?: React.ReactNode; // extra fields inside the dialog
 }) {
-  const { state, pending, onSubmit } = useActionForm(action);
+  const { state, formAction, formRef, onSubmit } = useActionForm(action);
   const dialog = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -50,8 +50,7 @@ export function ConfirmDialog({
         ref={dialog}
         className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-card border border-cloud bg-white p-0 text-navy shadow-lg backdrop:bg-navy/40"
       >
-        <FormPendingContext value={pending}>
-        <form onSubmit={onSubmit} className="space-y-4 p-5">
+        <form ref={formRef} action={formAction} onSubmit={onSubmit} className="space-y-4 p-5">
           <h2 className="text-base font-bold">{title}</h2>
           {description ? <div className="text-sm text-muted">{description}</div> : null}
           {Object.entries(values).map(([name, value]) => (
@@ -75,7 +74,6 @@ export function ConfirmDialog({
             <SubmitButton variant={confirmVariant}>{confirmLabel}</SubmitButton>
           </div>
         </form>
-        </FormPendingContext>
       </dialog>
     </>
   );

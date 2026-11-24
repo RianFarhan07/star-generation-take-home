@@ -1,27 +1,43 @@
 "use client";
 
-import { createContext, useActionState, useTransition } from "react";
+import { useActionState, useLayoutEffect, useRef } from "react";
 import type { ActionState } from "@/lib/actions";
 
-/** True while the surrounding form's Server Action is running. SubmitButton reads it to disable itself. */
-export const FormPendingContext = createContext(false);
+/** Writes the submitted values back into the form's visible fields (hidden inputs and files are left alone). */
+function restoreFields(form: HTMLFormElement, typed: FormData) {
+  for (const element of Array.from(form.elements)) {
+    if (!(element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement)) continue;
+    if (!element.name || element.type === "hidden" || element.type === "file" || element.type === "submit") continue;
+    if (element instanceof HTMLInputElement && (element.type === "checkbox" || element.type === "radio")) {
+      element.checked = typed.getAll(element.name).includes(element.value);
+    } else {
+      element.value = String(typed.get(element.name) ?? "");
+    }
+  }
+}
 
 /**
- * Runs a Server Action from a form without letting React clear the fields afterwards.
+ * Wires a form to a Server Action and keeps what was typed when the action fails.
  *
- * React 19 resets an uncontrolled form after every `<form action={...}>` call, even when the action
- * returned an error, so a rejected entry would wipe what the person had just typed. Sending the data
- * from `onSubmit` instead keeps the fields as they are; success handlers reset the form explicitly.
+ * React 19 clears an uncontrolled form after every form action, even one that returned an error, so a
+ * rejected entry would wipe the person's input. The form keeps its real `action` (it still works before the
+ * page has hydrated, and `useFormStatus` still drives the submit button); we only remember the submitted
+ * values and write them back when the action reports an error.
  */
 export function useActionForm(action: (state: ActionState, formData: FormData) => Promise<ActionState>) {
-  const [state, dispatch] = useActionState(action, null);
-  const [pending, startTransition] = useTransition();
+  const [state, formAction] = useActionState(action, null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const typed = useRef<FormData | null>(null);
 
+  // Does not call preventDefault, so React still runs the form action as usual.
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    startTransition(() => dispatch(data));
+    typed.current = new FormData(event.currentTarget);
   }
 
-  return { state, pending, onSubmit };
+  // Runs after React has reset the form for this action and before the browser paints.
+  useLayoutEffect(() => {
+    if (state && !state.ok && formRef.current && typed.current) restoreFields(formRef.current, typed.current);
+  }, [state]);
+
+  return { state, formAction, formRef, onSubmit };
 }
