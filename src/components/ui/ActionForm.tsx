@@ -1,11 +1,12 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { ActionState } from "@/lib/actions";
+import { FormPendingContext, useActionForm } from "./useActionForm";
 
 /**
- * A form wired to a Server Action. Shows the action's error or success message under the fields and
- * clears the form after a success when `resetOnSuccess` is set.
+ * A form wired to a Server Action. Shows the action's error or success message under the fields, keeps
+ * what was typed when the action fails, and clears the form after a success when `resetOnSuccess` is set.
  */
 export function ActionForm({
   action,
@@ -18,7 +19,7 @@ export function ActionForm({
   className?: string;
   resetOnSuccess?: boolean;
 }) {
-  const [state, formAction] = useActionState(action, null);
+  const { state, pending, onSubmit } = useActionForm(action);
   const ref = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -26,8 +27,8 @@ export function ActionForm({
   }, [state, resetOnSuccess]);
 
   return (
-    <form ref={ref} action={formAction} className={className}>
-      {children}
+    <form ref={ref} onSubmit={onSubmit} className={className}>
+      <FormPendingContext value={pending}>{children}</FormPendingContext>
       {state && !state.ok ? (
         <p role="alert" className="mt-3 rounded-card bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {state.error}
