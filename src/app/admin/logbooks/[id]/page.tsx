@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ActionForm } from "@/components/ui/ActionForm";
+import { AutosaveEntryFields } from "@/components/ui/AutosaveEntry";
+import { AutosaveProvider } from "@/components/ui/AutosaveContext";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardHeader, EmptyState, PageHeader } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { Field, Input, Textarea } from "@/components/ui/Field";
-import { SubmitButton } from "@/components/ui/SubmitButton";
+import { GuardedConfirmDialog } from "@/components/ui/GuardedConfirmDialog";
 import { Td, Th, Tr } from "@/components/ui/Table";
 import { embedded, one, rows } from "@/lib/db";
+import { entryChanges, shorten } from "@/lib/entryDiff";
 import { formatRupiah } from "@/lib/money";
 import { createClient } from "@/lib/supabase/server";
 import { formatHours, formatMonth, formatWib } from "@/lib/time";
@@ -76,6 +77,17 @@ export default async function LogbookReviewPage({ params }: { params: Promise<{ 
   const submitted = logbook.status === "submitted";
   const tutorNames = [...new Set(preview.map((p) => p.tutor_name))].join(", ");
 
+  // What the admin changed in each edited entry: the tutor's text (the latest previous version) against the entry now.
+  const changesOf = new Map(
+    entries
+      .filter((e) => e.edited_by_admin)
+      .map((e) => {
+        const before = revisions.filter((r) => r.entry_id === e.id).at(-1);
+        return [e.id, before ? entryChanges(before, e) : []] as const;
+      }),
+  );
+  const editedEntries = entries.filter((e) => (changesOf.get(e.id) ?? []).length > 0);
+
   // A logbook is reviewed as a whole month, so "request changes" always sends the month back. The button in
   // an entry's card only opens the same dialog with that entry already flagged.
   const requestChangesDialog = (preflaggedEntryId: string | null) => (
@@ -106,7 +118,7 @@ export default async function LogbookReviewPage({ params }: { params: Promise<{ 
   );
 
   return (
-    <>
+    <AutosaveProvider>
       <PageHeader
         title={`${cls?.name} — ${formatMonth(logbook.month)}`}
         subtitle={
@@ -121,11 +133,34 @@ export default async function LogbookReviewPage({ params }: { params: Promise<{ 
             {submitted ? (
               <>
                 {requestChangesDialog(null)}
-                <ConfirmDialog
+                <GuardedConfirmDialog
                   triggerLabel="Approve"
                   triggerVariant="primary"
                   title="Approve this logbook"
-                  description={`This records ${formatRupiah(total)} of earnings for ${preview.length} lesson(s) (${tutorNames}) and makes the logbook visible to paid students. An approved logbook can no longer change.`}
+                  description={
+                    <>
+                      <p>{`This records ${formatRupiah(total)} of earnings for ${preview.length} lesson(s) (${tutorNames}) and makes the logbook visible to paid students. An approved logbook can no longer change.`}</p>
+                      {editedEntries.length > 0 ? (
+                        <div className="mt-3 text-navy">
+                          <p className="font-semibold">
+                            You edited {editedEntries.length} {editedEntries.length === 1 ? "entry" : "entries"} in this review. They are saved as shown:
+                          </p>
+                          <ul className="mt-1 list-disc space-y-1 pl-5 text-xs">
+                            {editedEntries.map((e) => (
+                              <li key={e.id}>
+                                <strong>{embedded(e.lesson) ? formatWib(embedded(e.lesson)!.starts_at) : "Lesson"}</strong>
+                                {changesOf.get(e.id)!.map((c) => (
+                                  <span key={c.key} className="block text-muted">
+                                    {c.label}: &ldquo;{shorten(c.before)}&rdquo; &rarr; &ldquo;{shorten(c.after)}&rdquo;
+                                  </span>
+                                ))}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
+                    </>
+                  }
                   confirmLabel="Approve"
                   action={approveLogbook}
                   values={{ logbookId: logbook.id }}
@@ -145,7 +180,7 @@ export default async function LogbookReviewPage({ params }: { params: Promise<{ 
           ) : (
             entries.map((e) => {
               const lesson = embedded(e.lesson);
-              const history = revisions.filter((r) => r.entry_id === e.id);
+              const changes = changesOf.get(e.id) ?? [];
               return (
                 <Card key={e.id}>
                   <CardHeader
@@ -173,44 +208,33 @@ export default async function LogbookReviewPage({ params }: { params: Promise<{ 
                       <dd className="whitespace-pre-wrap">{e.recommendation}</dd>
                     </div>
                   </dl>
-                  {history.length > 0 ? (
-                    <details className="border-t border-cloud px-4 py-3 text-sm">
-                      <summary className="cursor-pointer text-xs font-semibold">Previous versions ({history.length})</summary>
-                      {history.map((r) => (
-                        <div key={r.edited_at} className="mt-2 rounded-card bg-field p-3 text-xs">
-                          <div className="font-semibold">{r.topic} <span className="font-normal text-muted">· replaced {formatWib(r.edited_at)}</span></div>
-                          <p className="mt-1 whitespace-pre-wrap">{r.activities}</p>
-                          <p className="mt-1 whitespace-pre-wrap">{r.observation}</p>
-                          <p className="mt-1 whitespace-pre-wrap">{r.recommendation}</p>
+                  {changes.length > 0 ? (
+                    <div className="border-t border-cloud px-4 py-3 text-sm">
+                      <p className="text-xs font-semibold">What you changed (the tutor&apos;s text is kept)</p>
+                      {changes.map((c) => (
+                        <div key={c.key} className="mt-2 rounded-card bg-field p-3 text-xs">
+                          <div className="font-semibold">{c.label}</div>
+                          <p className="mt-1 whitespace-pre-wrap text-muted line-through">{c.before}</p>
+                          <p className="mt-1 whitespace-pre-wrap">{c.after}</p>
                         </div>
                       ))}
-                    </details>
+                    </div>
                   ) : null}
                   {submitted ? (
                     <details className="border-t border-cloud px-4 py-3">
                       <summary className="cursor-pointer text-xs font-semibold">Fix a small mistake yourself</summary>
-                      <ActionForm action={editLogbookEntry} className="mt-3 grid gap-3">
-                        <input type="hidden" name="logbookId" value={logbook.id} />
-                        <input type="hidden" name="entryId" value={e.id} />
-                        <Field label="Topic">
-                          <Input name="topic" required defaultValue={e.topic} />
-                        </Field>
-                        <Field label="Activities">
-                          <Textarea name="activities" required defaultValue={e.activities} />
-                        </Field>
-                        <Field label="Tutor observation">
-                          <Textarea name="observation" required defaultValue={e.observation} />
-                        </Field>
-                        <Field label="Future recommendation">
-                          <Textarea name="recommendation" required defaultValue={e.recommendation} />
-                        </Field>
-                        <p className="text-xs text-muted">
-                          The tutor&apos;s original text is kept and the entry is marked as edited. Problems with the schedule or the hours go back to the tutor with &ldquo;Request changes&rdquo;.
+                      <div className="mt-3">
+                        <AutosaveEntryFields
+                          id={e.id}
+                          hasEntry
+                          initial={{ topic: e.topic, activities: e.activities, observation: e.observation, recommendation: e.recommendation }}
+                          hidden={{ logbookId: logbook.id, entryId: e.id }}
+                          save={editLogbookEntry}
+                        />
+                        <p className="mt-2 text-xs text-muted">
+                          Changes save by themselves. The tutor&apos;s original text is kept and the entry is marked as edited. Problems with the schedule or the hours go back to the tutor with &ldquo;Request changes&rdquo;.
                         </p>
-                        <div>
-                          <SubmitButton variant="secondary">Save edit</SubmitButton>
-                        </div>
-                      </ActionForm>
+                      </div>
                     </details>
                   ) : null}
                 </Card>
@@ -279,6 +303,6 @@ export default async function LogbookReviewPage({ params }: { params: Promise<{ 
           </Card>
         </div>
       </div>
-    </>
+    </AutosaveProvider>
   );
 }

@@ -22,6 +22,7 @@ export function ConfirmDialog({
   action,
   values = {},
   reasonLabel,
+  triggerDisabled = false,
   children,
 }: {
   triggerLabel: string;
@@ -33,6 +34,7 @@ export function ConfirmDialog({
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
   values?: Record<string, string>;
   reasonLabel?: string;
+  triggerDisabled?: boolean; // the button that opens the dialog cannot be used for now
   children?: React.ReactNode; // extra fields inside the dialog
 }) {
   const { state, formAction, formRef, onSubmit } = useActionForm(action);
@@ -44,7 +46,12 @@ export function ConfirmDialog({
 
   return (
     <>
-      <button type="button" className={buttonClass(triggerVariant, "px-2.5 py-1 text-xs")} onClick={() => dialog.current?.showModal()}>
+      <button
+        type="button"
+        disabled={triggerDisabled}
+        className={buttonClass(triggerVariant, "px-2.5 py-1 text-xs")}
+        onClick={() => dialog.current?.showModal()}
+      >
         {triggerLabel}
       </button>
       <dialog

@@ -2,9 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/ui/ActionForm";
 import { Badge } from "@/components/ui/Badge";
+import { AutosaveEntryFields } from "@/components/ui/AutosaveEntry";
+import { AutosaveProvider } from "@/components/ui/AutosaveContext";
 import { Card, CardHeader, PageHeader } from "@/components/ui/Card";
-import { Field, Input, Textarea } from "@/components/ui/Field";
-import { SubmitButton } from "@/components/ui/SubmitButton";
+import { FinaliseButton } from "@/components/tutor/FinaliseButton";
 import { one, rows } from "@/lib/db";
 import { createClient } from "@/lib/supabase/server";
 import { formatHours, formatMonth, formatWib, wibInputToUtcIso } from "@/lib/time";
@@ -111,7 +112,7 @@ export default async function LogbookMonthPage({ params }: { params: Promise<{ c
   } else if (missing.length > 0) blockedReason = `${missing.length} ended lesson(s) still need an entry.`;
 
   return (
-    <>
+    <AutosaveProvider>
       <PageHeader
         title={`${cls.name} — ${formatMonth(`${month}-01`)}`}
         subtitle={<Link href="/tutor/logbooks" className="underline-offset-2 hover:underline">All logbooks</Link>}
@@ -144,7 +145,7 @@ export default async function LogbookMonthPage({ params }: { params: Promise<{ c
               <input type="hidden" name="logbookId" value={logbook.id} />
               <input type="hidden" name="classId" value={classId} />
               <input type="hidden" name="month" value={month} />
-              {canSubmit ? <SubmitButton>Finalise and submit</SubmitButton> : <button type="button" disabled className="rounded-card bg-navy px-3.5 py-2 text-sm font-semibold text-white opacity-50">Finalise and submit</button>}
+              <FinaliseButton canSubmit={canSubmit} />
             </ActionForm>
           ) : null}
         </div>
@@ -187,26 +188,20 @@ export default async function LogbookMonthPage({ params }: { params: Promise<{ c
                     {mine ? "You can write the entry once the lesson has ended." : "This lesson was taught by another tutor and has not ended yet."}
                   </p>
                 ) : editable && mine ? (
-                  <ActionForm action={saveEntry} className="grid gap-3 p-4">
-                    <input type="hidden" name="lessonId" value={l.id} />
-                    <input type="hidden" name="classId" value={classId} />
-                    <input type="hidden" name="month" value={month} />
-                    <Field label="Topic">
-                      <Input name="topic" required defaultValue={entry?.topic} />
-                    </Field>
-                    <Field label="Activities" hint="What happened in the lesson.">
-                      <Textarea name="activities" required defaultValue={entry?.activities} />
-                    </Field>
-                    <Field label="Tutor observation">
-                      <Textarea name="observation" required defaultValue={entry?.observation} />
-                    </Field>
-                    <Field label="Future recommendation" hint="What comes next.">
-                      <Textarea name="recommendation" required defaultValue={entry?.recommendation} />
-                    </Field>
-                    <div>
-                      <SubmitButton>{entry ? "Update entry" : "Save entry"}</SubmitButton>
-                    </div>
-                  </ActionForm>
+                  <div className="p-4">
+                    <AutosaveEntryFields
+                      id={l.id}
+                      hasEntry={Boolean(entry)}
+                      initial={{
+                        topic: entry?.topic ?? "",
+                        activities: entry?.activities ?? "",
+                        observation: entry?.observation ?? "",
+                        recommendation: entry?.recommendation ?? "",
+                      }}
+                      hidden={{ lessonId: l.id, classId, month }}
+                      save={saveEntry}
+                    />
+                  </div>
                 ) : entry ? (
                   <dl className="space-y-3 p-4 text-sm">
                     <div>
@@ -251,6 +246,6 @@ export default async function LogbookMonthPage({ params }: { params: Promise<{ c
           })}
         </div>
       )}
-    </>
+    </AutosaveProvider>
   );
 }
