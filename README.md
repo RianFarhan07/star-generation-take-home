@@ -62,8 +62,10 @@ Leave it off, and change the seeded passwords, for anything that is deployed.
 1. **Admin approves a logbook.** Sign in as the admin → *Logbooks* → open the submitted month. Four lessons of
    90 minutes at Rp100,000 per hour preview as **Rp600,000**. Approve it. Approve again: nothing is added.
 2. **Tutor finishes a month.** Sign in as Andi → *Logbooks* → open last month: one lesson is missing its entry.
-   Write it, then *Finalise and submit*. Back as the admin you can request changes (with a comment and
-   flagged entries) or fix a typo yourself; the tutor's original text is kept.
+   Write it: entries **save by themselves** (a status under each shows Saving / Saved) and *Finalise and submit*
+   waits until everything is saved. Back as the admin you can request changes (with a comment and flagged entries,
+   also from a small button on each entry) or fix a typo yourself, which saves by itself and shows what you changed
+   (also listed in the Approve dialog); the tutor's original text is kept.
 3. **Capacity and payment.** Sign in as Sari → *Browse classes* → enroll (accepting the no-refund note). The seat is
    locked at once and an invoice with a 24 hour countdown appears. Press *I have paid* and fill the form
    (a proof image is optional). Now sign in as Citra: the class is **full**.
@@ -71,10 +73,11 @@ Leave it off, and change the seeded passwords, for anything that is deployed.
    Sari now sees the schedule, her hours and approved logbooks. (Reject it instead to see the seat released.)
 5. **Hours running out.** Sign in as Budi: *Low hours* and a renewal invoice. The admin *Overview* lists him too.
    His class page opens with *What's next* from the last approved logbook.
-6. **Waitlist and notifications.** As Citra (class full) press *Join waitlist*. As the admin, reject Sari's transfer
-   (or let her 24 hours run out): Citra's bell shows that a seat is **reserved for her for 24 hours**, and
-   nobody else can enroll into it. Every role has a *Notifications* page (invoices, payment decisions, cancelled
-   lessons, logbook updates). Tutors can also schedule a lesson with *Repeat weekly for 8 weeks*.
+6. **Waitlist and notifications.** As Citra (class full) press *Join waitlist* (accepting the no-refund note). As
+   the admin, reject Sari's transfer (or let her 24 hours run out): Citra is **enrolled at once** with her own
+   invoice and 24 hours to pay, and her bell says so; if she does not pay, the seat goes to the next in line.
+   Clicking a notification marks it as read and opens what it is about. The admin's sidebar counts payments to
+   verify, logbooks to review and refunds to repay. Tutors can also schedule a lesson with *Repeat weekly for 8 weeks*.
 7. **Money.** Admin → *Classes* → open the class for **profitability** (revenue counted from hours actually used,
    tutor cost, margin, break-even head count). As Andi, *Earnings* answers "what will I be paid?" per lesson.
 8. **Things that must not work.** As a student, open `/admin` (you are sent back to `/student`). Rates are never

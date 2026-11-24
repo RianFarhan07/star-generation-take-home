@@ -209,10 +209,37 @@ These are not among the three main improvements; each answers one more sentence 
   invoices, payment decisions, cancelled lessons, logbook submissions, change requests and approvals, and refunds.
   They are written by database triggers on the tables where the events happen, so no code path can forget to notify;
   everyone reads only their own. Delivery by e-mail or WhatsApp is left out.
-- **Waitlist with a priority window.** When a class is full students can queue. When a seat frees up (payment window
-  expired, payment rejected, cancellation, withdrawal or a larger capacity) the first in line is offered it for 24
-  hours and nobody else can take it; an unused offer passes to the next student. *Left out:* offering several seats
-  at once to a group, and automatically enrolling the student.
+- **Waitlist that enrols the first in line.** When a class is full students can queue, accepting the no-refund
+  terms when they join. When a seat frees up (payment window expired, payment rejected, cancellation, withdrawal or a
+  larger capacity) the first in line is enrolled at once with the usual first invoice and 24 hour payment window and
+  is told the amount; if they do not pay, the existing expiry job hands the seat to the next student. *Considered:*
+  reserving the seat for 24 hours and making the student press Enroll (the first version: a seat could stay out of
+  reach for up to 48 hours and a student who missed the window lost their place). *Left out:* offering several seats
+  at once to a group; the price is the rate at the moment the seat opens, stated in the notification before the
+  student decides to pay.
+
+## Improvements found by trying it by hand
+
+After building, the owner used the app and these came out of it. Each one names who it helps, why, and what was left out.
+
+- **Entries save themselves** (tutors and admins). A tutor typed an edit, pressed *Finalise* and the edit was left
+  behind, because saving was a separate button. Now an entry saves a moment after typing stops and when a field is
+  left, once all four fields have text; *Finalise* and *Approve* stay disabled while anything is unsaved. *Left out:*
+  saving half-written entries (the database requires all four fields).
+- **The admin sees what they changed** (admins, and the tutor through the kept original). Each edited entry shows the
+  tutor's text against the admin's, and the Approve dialog lists every change before it is confirmed. Because the edit
+  screen saves repeatedly, the only previous version kept is the tutor's own text.
+- **The waitlist enrols the first in line** (students, and the business, which gets the seat paid sooner): see above.
+- **Counts that say where to look** (admin). The sidebar shows payments waiting for verification, logbooks waiting for
+  review and refunds waiting to be repaid. *Left out:* counts for tutors and students.
+- **Notifications act when clicked** (everyone): a click marks the notification as read and opens what it is about.
+- **Errors that point somewhere** (admin, students): asking for a renewal invoice while one is open links to that
+  invoice, and the Students table shows *Open invoice* instead of a button that cannot work.
+- **Not built, and why.** *Short payments:* when a transfer is less than the invoice the admin can only reject it,
+  which releases the seat of a first invoice, and the money that did arrive is not recorded anywhere. Three better
+  routes were worked out (record partial payments; return the invoice to the student to report the total; let the
+  admin record the rest as paid outside the app) and the choice is open. *A calendar view of the tutor's schedule* is
+  on hold.
 
 ## Known weaknesses
 
@@ -227,6 +254,8 @@ These are not among the three main improvements; each answers one more sentence 
   admin has to cancel the lesson, which says it did not happen even though it did. Nobody can write an entry on
   someone else's behalf, on purpose (see 4), so there is no gentler way out.
 - Monthly logbooks have no submission deadline and no reminder; nothing tells a tutor that a month is waiting.
+- A transfer shorter than the invoice cannot be accepted in part: the admin can only reject it (which releases the
+  seat of a first invoice), and the money that did arrive is not recorded anywhere, so it has to be repaid by hand.
 - Payments are simulated; a screenshot is not proof, only a hint for the admin.
 - Badge text uses the brief's exact colours, which is below AA contrast for small white text (see ARCHITECTURE.md).
 - The seeded accounts share one documented password; a deployed copy should turn off the demo-login list and

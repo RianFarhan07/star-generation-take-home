@@ -73,8 +73,9 @@ parameter so tests can simulate time instead of waiting.
 
 Notifications and the waitlist are driven by `AFTER` triggers on the tables where the events happen (invoices,
 payments, lessons, logbooks, refunds, enrollments), so none of the functions above had to change and no code path
-can forget to notify or to hand a freed seat to the next student. The capacity trigger also treats a seat reserved
-for another student on the waitlist as taken.
+can forget to notify or to hand a freed seat to the next student: the moment a seat frees up, the first student on
+the waitlist is enrolled with the usual invoice (`_enroll_from_waitlist` → `_enroll_student`, the same function a
+student enrolling uses), so a freed seat is never visible to a newcomer first.
 
 ## Tests
 
