@@ -2,6 +2,7 @@ import { ActionForm } from "@/components/ui/ActionForm";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/Card";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { rows } from "@/lib/db";
 import { createClient } from "@/lib/supabase/server";
@@ -46,10 +47,10 @@ export default async function NewClassPage() {
           </Field>
           <div />
           <Field label="Student rate per hour (Rp)" hint="Hidden from tutors.">
-            <Input name="studentRate" inputMode="numeric" defaultValue="150.000" required />
+            <MoneyInput name="studentRate" defaultValue="150.000" required />
           </Field>
           <Field label="Tutor rate per hour (Rp)">
-            <Input name="tutorRate" inputMode="numeric" defaultValue="100.000" required />
+            <MoneyInput name="tutorRate" defaultValue="100.000" required />
           </Field>
           <div className="sm:col-span-2">
             <SubmitButton>Create class</SubmitButton>

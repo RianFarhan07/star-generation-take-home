@@ -244,6 +244,9 @@ After building, the owner used the app and these came out of it. Each one names 
   payments (the most correct, but it changes verification, invoice status, refunds and the finance figures);
   letting the admin record the rest as paid outside the app. *Left out:* the money of the first, short transfer is
   not recorded as its own payment; the admin matches both transfers against the bank statement.
+- **Amounts are easy to read as you type** (everyone who enters a price): the rupiah boxes group thousands with dots while
+  typing ("1800000" shows as "1.800.000"). A decimal comma is left as typed, so it is still refused instead of being
+  quietly read as a different amount.
 - **Not built.** A calendar view of the tutor's schedule is on hold.
 
 ## Known weaknesses

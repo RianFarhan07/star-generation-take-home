@@ -3,7 +3,8 @@ import { Badge } from "@/components/ui/Badge";
 import { buttonClass } from "@/components/ui/Button";
 import { Card, EmptyState, PageHeader } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { Field, Input, Select } from "@/components/ui/Field";
+import { Field, Select } from "@/components/ui/Field";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 import { Table, Td, Th, Tr } from "@/components/ui/Table";
 import { embedded, rows } from "@/lib/db";
 import { createClient } from "@/lib/supabase/server";
@@ -131,7 +132,7 @@ export default async function StudentsPage() {
                         values={{ enrollmentId: e.id }}
                       >
                         <Field label="Amount (Rp)">
-                          <Input name="amount" inputMode="numeric" required placeholder="500.000" />
+                          <MoneyInput name="amount" required placeholder="500.000" />
                         </Field>
                       </ConfirmDialog>
                     </div>

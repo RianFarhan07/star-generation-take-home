@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Card, CardHeader, DefinitionList, EmptyState, PageHeader } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Table, Td, Th, Tr } from "@/components/ui/Table";
 import { embedded, LIVE_STATUSES, one, rows } from "@/lib/db";
@@ -94,10 +95,10 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
           <ActionForm action={setClassRates} className="grid gap-3 border-t border-cloud p-4 sm:grid-cols-2">
             <input type="hidden" name="classId" value={cls.id} />
             <Field label="New student rate (Rp)">
-              <Input name="studentRate" inputMode="numeric" required defaultValue={current ? String(current.student_rate_per_hour) : ""} />
+              <MoneyInput name="studentRate" required defaultValue={current ? String(current.student_rate_per_hour) : ""} />
             </Field>
             <Field label="New tutor rate (Rp)">
-              <Input name="tutorRate" inputMode="numeric" required defaultValue={current ? String(current.tutor_rate_per_hour) : ""} />
+              <MoneyInput name="tutorRate" required defaultValue={current ? String(current.tutor_rate_per_hour) : ""} />
             </Field>
             <p className="text-xs text-muted sm:col-span-2">
               Changes apply forward only: invoices already issued keep their price, and lessons already taught keep their rate.

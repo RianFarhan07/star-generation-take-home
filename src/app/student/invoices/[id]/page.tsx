@@ -8,6 +8,7 @@ import { Card, CardHeader, DefinitionList, PageHeader } from "@/components/ui/Ca
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Countdown } from "@/components/ui/Countdown";
 import { Field, Input, Select } from "@/components/ui/Field";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 import { embedded, one, rows } from "@/lib/db";
 import { formatRupiah } from "@/lib/money";
 import { getSessionProfile } from "@/lib/session";
@@ -164,7 +165,7 @@ export default async function StudentInvoicePage({ params }: { params: Promise<{
                 </Field>
               </div>
               <Field label="Amount transferred (Rp)">
-                <Input name="amount" inputMode="numeric" required defaultValue={String(invoice.amount)} />
+                <MoneyInput name="amount" required defaultValue={String(invoice.amount)} />
               </Field>
               <ProofUpload userId={session.userId} invoiceId={invoice.id} />
               <div className="flex flex-wrap items-center gap-2">
