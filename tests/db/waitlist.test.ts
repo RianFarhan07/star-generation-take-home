@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { expectCode, makeUser } from "../helpers/clients";
+import { expectCode, makeUser, serviceClient } from "../helpers/clients";
 import { adminClient, createClass, enroll, hoursFromNow, runJobs } from "../helpers/fixtures";
 
 type Client = Awaited<ReturnType<typeof makeUser>>["client"];
@@ -86,9 +86,10 @@ describe("a freed seat becomes an invoice for the first in line", () => {
     expect(await catalog(c.client, classId)).toMatchObject({ on_waitlist: true, waitlist_position: 1, seats_left: 0 });
     expect(await myEnrollment(c.client, classId)).toBeNull();
 
-    const notes = await b.client.from("notifications").select("kind, link").eq("kind", "seat_offered");
+    const notes = await b.client.from("notifications").select("kind, link, body").eq("kind", "seat_offered");
     expect(notes.data).toHaveLength(1);
     expect(notes.data![0].link).toBe(`/student/invoices/${mine!.invoice!.id}`);
+    expect(notes.data![0].body).toContain("Rp1,800,000"); // the price is stated before they pay
     expect((await c.client.from("notifications").select("kind").eq("kind", "seat_offered")).data).toEqual([]);
   });
 
@@ -115,6 +116,28 @@ describe("a freed seat becomes an invoice for the first in line", () => {
     const mine = await myEnrollment(b.client, classId);
     expect((await b.client.rpc("cancel_pending_enrollment", { p_enrollment_id: mine!.id })).error).toBeNull();
     expect(await myEnrollment(c.client, classId)).toMatchObject({ status: "pending_payment" });
+  });
+
+  it("drops an entry that cannot be enrolled, tells that student, and still serves the rest of the line", async () => {
+    const admin = await adminClient();
+    const tutor = await makeUser("tutor");
+    const classId = await createClass(admin, { tutorId: tutor.id, capacity: 2 });
+    const holder = await makeUser("student");
+    const { enrollmentId } = await enroll(holder.client, classId);
+    const ghost = await makeUser("student");
+    await enroll(ghost.client, classId); // the class is full, and the ghost already holds a seat
+    // An entry that should not exist (written with the service role): the ghost is on the waitlist AND enrolled.
+    const planted = await serviceClient().from("waitlist").insert({ class_id: classId, student_id: ghost.id, terms_accepted_at: new Date().toISOString() });
+    expect(planted.error).toBeNull();
+    const next = await makeUser("student");
+    await join(next.client, classId);
+
+    expect((await holder.client.rpc("cancel_pending_enrollment", { p_enrollment_id: enrollmentId })).error).toBeNull();
+
+    expect((await ghost.client.from("waitlist").select()).data).toEqual([]);
+    const dropped = await ghost.client.from("notifications").select("kind").eq("kind", "waitlist_dropped");
+    expect(dropped.data).toHaveLength(1);
+    expect(await myEnrollment(next.client, classId)).toMatchObject({ status: "pending_payment" });
   });
 
   it("skips a student who left the waitlist", async () => {
