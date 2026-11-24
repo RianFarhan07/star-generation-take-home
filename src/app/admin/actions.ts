@@ -2,7 +2,8 @@
 
 import { requireRole } from "@/lib/session";
 import { redirect } from "next/navigation";
-import { callRpc, callRpcResult, int, rupiah, text, type ActionState } from "@/lib/actions";
+import { callRpc, callRpcResult, int, openInvoiceLink, rupiah, text, type ActionState } from "@/lib/actions";
+import { messageForCode } from "@/lib/errors";
 import { wibInputToUtcIso } from "@/lib/time";
 
 // Every admin action is one database function call; the database checks that the caller is an admin.
@@ -129,7 +130,11 @@ export async function exceptionRefund(_state: ActionState, formData: FormData): 
 
 export async function issueRenewal(_state: ActionState, formData: FormData): Promise<ActionState> {
   await requireRole("admin");
-  return callRpc("issue_renewal_invoice", { p_enrollment_id: text(formData, "enrollmentId") }, ["/admin/students", "/admin/invoices"], "Renewal invoice issued.");
+  const enrollmentId = text(formData, "enrollmentId");
+  // When an invoice is already open, say so and point at it instead of failing blindly (the database refuses too).
+  const open = await openInvoiceLink(enrollmentId, "admin");
+  if (open) return { ok: false, error: messageForCode("RENEWAL_OPEN"), link: open };
+  return callRpc("issue_renewal_invoice", { p_enrollment_id: enrollmentId }, ["/admin/students", "/admin/invoices"], "Renewal invoice issued.");
 }
 
 // ----------------------------------------------------------------------------- invoices and payments

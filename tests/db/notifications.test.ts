@@ -51,6 +51,27 @@ describe("payments and invoices", () => {
   });
 });
 
+describe("marking one notification as read", () => {
+  it("marks only that notification and only for its owner", async () => {
+    const { admin, classId } = await setup();
+    const student = await makeUser("student");
+    await enrollAndPay(student.client, admin, classId); // two notifications: invoice issued, payment verified
+    const other = await makeUser("student");
+    const before = await student.client.from("notifications").select("id, read_at").order("created_at");
+    expect(before.data).toHaveLength(2);
+    const [first, second] = before.data!;
+
+    await other.client.rpc("mark_notification_read", { p_id: first.id }); // not theirs: nothing happens
+    const untouched = await student.client.from("notifications").select("read_at");
+    expect(untouched.data!.every((n) => n.read_at === null)).toBe(true);
+
+    expect((await student.client.rpc("mark_notification_read", { p_id: first.id })).error).toBeNull();
+    const after = await student.client.from("notifications").select("id, read_at");
+    expect(after.data!.find((n) => n.id === first.id)!.read_at).not.toBeNull();
+    expect(after.data!.find((n) => n.id === second.id)!.read_at).toBeNull();
+  });
+});
+
 describe("lessons", () => {
   it("tells paid students, and only them, when a lesson is cancelled", async () => {
     const { admin, tutor, classId } = await setup();

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef } from "react";
 import type { ActionState } from "@/lib/actions";
 import { buttonClass, type ButtonVariant } from "./Button";
@@ -65,6 +66,14 @@ export function ConfirmDialog({
           {state && !state.ok ? (
             <p role="alert" className="rounded-card bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {state.error}
+              {state.link ? (
+                <>
+                  {" "}
+                  <Link href={state.link.href} className="font-semibold underline underline-offset-2">
+                    {state.link.label}
+                  </Link>
+                </>
+              ) : null}
             </p>
           ) : null}
           <div className="flex justify-end gap-2">

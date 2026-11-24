@@ -681,6 +681,9 @@ isOneToOne: false
 "mark_invoice_paid":
 { Args: { "p_invoice_id": string }; Returns: undefined
                            },
+"mark_notification_read":
+{ Args: { "p_id": string }; Returns: undefined
+                           },
 "mark_notifications_read":
 { Args: Record<PropertyKey, never>; Returns: number
                            },

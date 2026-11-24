@@ -27,6 +27,11 @@ function sentence(text: string): string {
   return trimmed.charAt(0).toUpperCase() + trimmed.slice(1) + ".";
 }
 
+/** The sentence for a known database error code (used when a screen detects the situation before calling). */
+export function messageForCode(code: keyof typeof BY_CODE): string {
+  return BY_CODE[code];
+}
+
 export function messageForError(err: { message?: string; code?: string }): string {
   if (err.code === "23P01") return BY_CODE.LESSON_OVERLAP;
   const match = /^([A-Z_]+): (.*)$/s.exec(err.message ?? "");

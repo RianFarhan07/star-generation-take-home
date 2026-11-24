@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
+import { buttonClass } from "@/components/ui/Button";
 import { Card, EmptyState, PageHeader } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Field, Input, Select } from "@/components/ui/Field";
@@ -19,14 +21,17 @@ type Balance = { enrollment_id: string; purchased_minutes: number; used_minutes:
 
 export default async function StudentsPage() {
   const supabase = await createClient();
-  const [enrollments, overview] = await Promise.all([
+  const [enrollments, overview, openInvoices] = await Promise.all([
     supabase
       .from("enrollments")
       .select("id, status, end_cause, student:profiles!enrollments_student_id_fkey(full_name), class:classes!enrollments_class_id_fkey(name)")
       .order("created_at", { ascending: false }),
     supabase.rpc("admin_overview"),
+    supabase.from("invoices").select("id, enrollment_id, status").in("status", ["unpaid", "awaiting_verification"]),
   ]);
   if (overview.error) throw new Error(overview.error.message);
+  // An enrollment with an open invoice cannot get a renewal invoice: link to that invoice instead of the button.
+  const openInvoiceOf = new Map(rows<{ id: string; enrollment_id: string; status: string }>(openInvoices).map((i) => [i.enrollment_id, i]));
   const balances = new Map<string, Balance>((overview.data.balances as Balance[]).map((b) => [b.enrollment_id, b]));
   const list = rows<EnrollmentRow>(enrollments).sort((a, b) =>
     (embedded(a.student)?.full_name ?? "").localeCompare(embedded(b.student)?.full_name ?? ""),
@@ -79,14 +84,23 @@ export default async function StudentsPage() {
                     <div className="flex flex-wrap justify-end gap-2">
                       {e.status === "active" ? (
                         <>
-                          <ConfirmDialog
-                            triggerLabel="Renewal"
-                            title="Issue a renewal invoice"
-                            description="A new package invoice at the current student rate. Not possible while another invoice is open."
-                            confirmLabel="Issue invoice"
-                            action={issueRenewal}
-                            values={{ enrollmentId: e.id }}
-                          />
+                          {openInvoiceOf.has(e.id) ? (
+                            <Link
+                              href={`/admin/invoices/${openInvoiceOf.get(e.id)!.id}`}
+                              className={buttonClass("secondary", "px-2.5 py-1 text-xs")}
+                            >
+                              Open invoice ({openInvoiceOf.get(e.id)!.status === "awaiting_verification" ? "to verify" : "unpaid"})
+                            </Link>
+                          ) : (
+                            <ConfirmDialog
+                              triggerLabel="Renewal"
+                              title="Issue a renewal invoice"
+                              description="A new package invoice at the current student rate. Not possible while another invoice is open."
+                              confirmLabel="Issue invoice"
+                              action={issueRenewal}
+                              values={{ enrollmentId: e.id }}
+                            />
+                          )}
                           <ConfirmDialog
                             triggerLabel="Withdraw"
                             triggerVariant="destructive"

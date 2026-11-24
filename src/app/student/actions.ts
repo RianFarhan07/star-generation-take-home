@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { callRpc, rupiah, text, type ActionState } from "@/lib/actions";
-import { messageForError } from "@/lib/errors";
+import { callRpc, openInvoiceLink, rupiah, text, type ActionState } from "@/lib/actions";
+import { messageForCode, messageForError } from "@/lib/errors";
 import { requireRole } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
 
@@ -52,7 +52,10 @@ export async function reportPayment(_state: ActionState, formData: FormData): Pr
 
 export async function issueRenewal(_state: ActionState, formData: FormData): Promise<ActionState> {
   await requireRole("student");
-  return callRpc("issue_renewal_invoice", { p_enrollment_id: text(formData, "enrollmentId") }, ["/student", "/student/invoices", `/student/classes/${text(formData, "classId")}`], "Renewal invoice issued. Find it under Invoices.");
+  const enrollmentId = text(formData, "enrollmentId");
+  const open = await openInvoiceLink(enrollmentId, "student");
+  if (open) return { ok: false, error: messageForCode("RENEWAL_OPEN"), link: open };
+  return callRpc("issue_renewal_invoice", { p_enrollment_id: enrollmentId }, ["/student", "/student/invoices", `/student/classes/${text(formData, "classId")}`], "Renewal invoice issued. Find it under Invoices.");
 }
 
 export async function withdraw(_state: ActionState, formData: FormData): Promise<ActionState> {

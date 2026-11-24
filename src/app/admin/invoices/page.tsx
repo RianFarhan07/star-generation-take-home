@@ -34,6 +34,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
   const { status: requested } = await searchParams;
   const status = TABS.some((t) => t.status === requested) ? (requested as string) : "awaiting_verification";
   const supabase = await createClient();
+  const { count: toVerify } = await supabase.from("invoices").select("id", { count: "exact", head: true }).eq("status", "awaiting_verification");
   const invoices = rows<InvoiceRow>(
     await supabase
       .from("invoices")
@@ -58,6 +59,11 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
             }`}
           >
             {tab.label}
+            {tab.status === "awaiting_verification" && toVerify ? (
+              <span className="ml-2 rounded-full bg-destructive px-1.5 py-0.5 text-[11px] font-bold text-white" aria-label={`${toVerify} waiting`}>
+                {toVerify}
+              </span>
+            ) : null}
           </Link>
         ))}
       </div>

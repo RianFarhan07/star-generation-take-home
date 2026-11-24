@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { ActionState } from "@/lib/actions";
 import { useActionForm } from "./useActionForm";
@@ -33,6 +34,14 @@ export function ActionForm({
       {state && !state.ok ? (
         <p role="alert" className="mt-3 rounded-card bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {state.error}
+          {state.link ? (
+            <>
+              {" "}
+              <Link href={state.link.href} className="font-semibold underline underline-offset-2">
+                {state.link.label}
+              </Link>
+            </>
+          ) : null}
         </p>
       ) : null}
       {state?.ok && state.message && state !== dismissed ? (

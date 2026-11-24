@@ -13,6 +13,7 @@ function isActive(pathname: string, href: string, roleHome: string): boolean {
 /** Navy sidebar on wide screens; a top bar with a menu button on phones. */
 export function Sidebar({
   groups,
+  badges,
   roleHome,
   userName,
   roleLabel,
@@ -21,6 +22,7 @@ export function Sidebar({
   unread,
 }: {
   groups: NavGroup[];
+  badges: Record<string, number>;
   roleHome: string;
   userName: string;
   roleLabel: string;
@@ -67,11 +69,19 @@ export function Sidebar({
                     href={item.href}
                     onClick={() => setOpen(false)}
                     aria-current={active ? "page" : undefined}
-                    className={`mb-0.5 block rounded-card px-3 py-2 text-sm ${
+                    className={`mb-0.5 flex items-center justify-between rounded-card px-3 py-2 text-sm ${
                       active ? "bg-gold font-bold text-navy" : "text-white/80 hover:bg-white/10"
                     }`}
                   >
                     {item.label}
+                    {badges[item.href] > 0 ? (
+                      <span
+                        className="rounded-full bg-destructive px-2 py-0.5 text-xs font-bold text-white"
+                        aria-label={`${badges[item.href]} waiting`}
+                      >
+                        {badges[item.href]}
+                      </span>
+                    ) : null}
                   </Link>
                 );
               })}
