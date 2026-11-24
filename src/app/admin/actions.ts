@@ -155,6 +155,16 @@ export async function rejectPayment(_state: ActionState, formData: FormData): Pr
   );
 }
 
+/** A transfer that is less than the invoice goes back to the student; the seat stays held for 24 more hours. */
+export async function returnUnderpaid(_state: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole("admin");
+  return callRpc(
+    "return_underpaid_payment",
+    { p_payment_id: text(formData, "paymentId"), p_reason: text(formData, "reason") },
+    invoicePaths(text(formData, "invoiceId")),
+  );
+}
+
 export async function markPaidOffline(_state: ActionState, formData: FormData): Promise<ActionState> {
   await requireRole("admin");
   return callRpc(

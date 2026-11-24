@@ -22,6 +22,7 @@ export function ConfirmDialog({
   action,
   values = {},
   reasonLabel,
+  reasonDefault,
   triggerDisabled = false,
   children,
 }: {
@@ -34,6 +35,7 @@ export function ConfirmDialog({
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
   values?: Record<string, string>;
   reasonLabel?: string;
+  reasonDefault?: string; // text the reason box starts with, so the admin can send it as it is
   triggerDisabled?: boolean; // the button that opens the dialog cannot be used for now
   children?: React.ReactNode; // extra fields inside the dialog
 }) {
@@ -67,7 +69,7 @@ export function ConfirmDialog({
           {children}
           {reasonLabel ? (
             <Field label={reasonLabel}>
-              <Textarea name="reason" required />
+              <Textarea name="reason" required defaultValue={reasonDefault} />
             </Field>
           ) : null}
           {state && !state.ok ? (

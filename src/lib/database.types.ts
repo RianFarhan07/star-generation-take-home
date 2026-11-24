@@ -719,6 +719,9 @@ isOneToOne: false
 "require_admin":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
+"return_underpaid_payment":
+{ Args: { "p_payment_id": string,"p_reason": string }; Returns: undefined
+                           },
 "reverse_payment":
 { Args: { "p_invoice_id": string,"p_reason": string }; Returns: undefined
                            },

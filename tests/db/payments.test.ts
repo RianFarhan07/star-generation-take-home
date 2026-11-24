@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { expectCode, makeUser, serviceClient } from "../helpers/clients";
-import { adminClient, createClass, daysFromNow, enroll, enrollAndPay, lesson, reportPayment } from "../helpers/fixtures";
+import { adminClient, createClass, daysFromNow, enroll, enrollAndPay, hoursFromNow, lesson, reportPayment, runJobs } from "../helpers/fixtures";
 
 async function setup(capacity = 2) {
   const admin = await adminClient();
@@ -167,6 +167,67 @@ describe("verification guards", () => {
     await expectCode(admin.rpc("verify_payment", { p_payment_id: paymentId }), "INVALID_STATE");
     const invoice = await student.client.from("invoices").select("status").eq("id", invoiceId).single();
     expect(invoice.data!.status).toBe("cancelled");
+  });
+});
+
+describe("returning a short transfer to the student", () => {
+  const report = (client: Awaited<ReturnType<typeof makeUser>>["client"], invoiceId: string, amount: number) =>
+    client.rpc("report_payment", { p_invoice_id: invoiceId, p_sender_name: "Budi", p_bank: "BCA", p_transfer_date: "2026-11-24", p_amount: amount });
+
+  it("keeps the seat and the invoice open for 24 more hours, so the student can report the total", async () => {
+    const { admin, classId } = await setup(1);
+    const student = await makeUser("student");
+    const { enrollmentId, invoiceId } = await enroll(student.client, classId);
+    const short = await report(student.client, invoiceId, 10000);
+    expect(short.error).toBeNull();
+
+    const { error } = await admin.rpc("return_underpaid_payment", { p_payment_id: short.data, p_reason: "Short by Rp1,790,000: transfer the rest and report the total." });
+    expect(error).toBeNull();
+
+    const payment = await student.client.from("payments").select("status, reject_reason").eq("id", short.data).single();
+    expect(payment.data).toMatchObject({ status: "rejected", reject_reason: "Short by Rp1,790,000: transfer the rest and report the total." });
+    const invoice = await student.client.from("invoices").select("status, payment_due_at").eq("id", invoiceId).single();
+    expect(invoice.data!.status).toBe("unpaid");
+    expect(Math.abs(Date.parse(invoice.data!.payment_due_at as string) - Date.now() - 24 * 3600_000)).toBeLessThan(60_000);
+    const enrollment = await student.client.from("enrollments").select("status").eq("id", enrollmentId).single();
+    expect(enrollment.data!.status).toBe("pending_payment");
+
+    // The seat is still theirs: a newcomer is refused, and the student can report the total and be verified.
+    await expectCode((await makeUser("student")).client.rpc("enroll_in_class", { p_class_id: classId, p_accept_terms: true }), "CLASS_FULL");
+    const total = await report(student.client, invoiceId, 1800000);
+    expect(total.error).toBeNull();
+    expect((await admin.rpc("verify_payment", { p_payment_id: total.data })).error).toBeNull();
+    expect((await student.client.from("enrollments").select("status").eq("id", enrollmentId).single()).data!.status).toBe("active");
+  });
+
+  it("tells the student, and does not expire the enrollment before the new window ends", async () => {
+    const { admin, classId } = await setup(1);
+    const student = await makeUser("student");
+    const { enrollmentId, invoiceId } = await enroll(student.client, classId);
+    const short = await report(student.client, invoiceId, 10000);
+    await admin.rpc("return_underpaid_payment", { p_payment_id: short.data, p_reason: "Short, please transfer the rest." });
+    const notes = await student.client.from("notifications").select("kind, body").eq("kind", "payment_rejected");
+    expect(notes.data).toHaveLength(1);
+    expect(notes.data![0].body).toContain("Short, please transfer the rest.");
+
+    expect((await runJobs(hoursFromNow(23), [enrollmentId])).expired).toBe(0);
+    expect((await runJobs(hoursFromNow(25), [enrollmentId])).expired).toBe(1);
+  });
+
+  it("only applies to a transfer that is really short, only for admins, and only once", async () => {
+    const { admin, classId } = await setup(2);
+    const student = await makeUser("student");
+    const { invoiceId } = await enroll(student.client, classId);
+    const full = await report(student.client, invoiceId, 1800000);
+    await expectCode(admin.rpc("return_underpaid_payment", { p_payment_id: full.data, p_reason: "x" }), "VALIDATION");
+
+    const other = await makeUser("student");
+    const { invoiceId: otherInvoice } = await enroll(other.client, classId);
+    const short = await report(other.client, otherInvoice, 5000);
+    await expectCode(other.client.rpc("return_underpaid_payment", { p_payment_id: short.data, p_reason: "x" }), "NOT_ALLOWED");
+    await expectCode(admin.rpc("return_underpaid_payment", { p_payment_id: short.data, p_reason: "  " }), "VALIDATION");
+    expect((await admin.rpc("return_underpaid_payment", { p_payment_id: short.data, p_reason: "short" })).error).toBeNull();
+    await expectCode(admin.rpc("return_underpaid_payment", { p_payment_id: short.data, p_reason: "short" }), "INVALID_STATE");
   });
 });
 

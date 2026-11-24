@@ -9,7 +9,7 @@ import { embedded, one, rows } from "@/lib/db";
 import { formatRupiah } from "@/lib/money";
 import { createClient } from "@/lib/supabase/server";
 import { formatWib } from "@/lib/time";
-import { adjustInvoiceHours, markPaidOffline, rejectPayment, reversePayment, verifyPayment } from "../../actions";
+import { adjustInvoiceHours, markPaidOffline, rejectPayment, returnUnderpaid, reversePayment, verifyPayment } from "../../actions";
 
 type InvoiceRow = {
   id: string;
@@ -78,6 +78,8 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
   const student = embedded(invoice.enrollment?.student)?.full_name;
   const cls = embedded(invoice.enrollment?.class);
   const pending = payments.find((p) => p.status === "pending");
+  // A first-invoice transfer for a seat that is already gone (no_seat) is handled by rejecting or verifying only.
+  const underpaid = Boolean(pending && !pending.no_seat && pending.amount < invoice.amount);
 
   return (
     <>
@@ -111,7 +113,37 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         <Card>
           <CardHeader title="What you can do" />
           <div className="flex flex-wrap gap-2 p-4">
-            {pending ? (
+            {pending && underpaid ? (
+              <>
+                <p className="w-full rounded-card bg-gold/15 p-3 text-sm">
+                  <strong>Short transfer:</strong> {formatRupiah(pending.amount)} reported of {formatRupiah(invoice.amount)} (short by{" "}
+                  {formatRupiah(invoice.amount - pending.amount)}). It cannot be verified.
+                </p>
+                <ConfirmDialog
+                  triggerLabel="Return to student"
+                  triggerVariant="primary"
+                  title="Return this short transfer to the student"
+                  description="The student is told what is missing. The invoice stays open and the seat stays held for 24 more hours, so they can transfer the rest and report the total they transferred. Reject it instead if the transfer is not on the bank statement."
+                  confirmLabel="Return to student"
+                  reasonLabel="Message to the student"
+                  reasonDefault={`Short by ${formatRupiah(invoice.amount - pending.amount)}: you transferred ${formatRupiah(pending.amount)} of ${formatRupiah(invoice.amount)}. Please transfer the rest and report the total amount you transferred within 24 hours.`}
+                  action={returnUnderpaid}
+                  values={{ paymentId: pending.id, invoiceId: invoice.id }}
+                />
+                <ConfirmDialog
+                  triggerLabel="Reject"
+                  triggerVariant="destructive"
+                  title="Reject this payment"
+                  description="Use this when the transfer is not on the bank statement. A first invoice is cancelled and the seat is released."
+                  confirmLabel="Reject payment"
+                  confirmVariant="destructive"
+                  reasonLabel="Reason"
+                  action={rejectPayment}
+                  values={{ paymentId: pending.id, invoiceId: invoice.id }}
+                />
+              </>
+            ) : null}
+            {pending && !underpaid ? (
               <>
                 <ConfirmDialog
                   triggerLabel="Verify payment"

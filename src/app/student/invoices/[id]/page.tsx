@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProofUpload } from "@/components/student/ProofUpload";
+import { ReportPaymentButton } from "@/components/student/ReportPaymentButton";
 import { ActionForm } from "@/components/ui/ActionForm";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardHeader, DefinitionList, PageHeader } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Countdown } from "@/components/ui/Countdown";
 import { Field, Input, Select } from "@/components/ui/Field";
-import { SubmitButton } from "@/components/ui/SubmitButton";
 import { embedded, one, rows } from "@/lib/db";
 import { formatRupiah } from "@/lib/money";
 import { getSessionProfile } from "@/lib/session";
@@ -58,6 +58,17 @@ export default async function StudentInvoicePage({ params }: { params: Promise<{
   const cls = embedded(enrollment?.class);
   const refunds = enrollment ? rows<RefundRow>(await supabase.from("refunds").select("id, amount, cause, status, bank_reference, created_at").eq("enrollment_id", enrollment.id).order("created_at")) : [];
 
+  // The latest report, to tell the student why it came back when the invoice is open again.
+  const lastReport = one<{ amount: number; status: string; reject_reason: string | null }>(
+    await supabase
+      .from("payments")
+      .select("amount, status, reject_reason")
+      .eq("invoice_id", id)
+      .order("reported_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  );
+
   const now = new Date().getTime(); // a request-time value on purpose: the page is rendered per request
   const windowOpen = invoice.kind === "initial" ? Boolean(invoice.payment_due_at) && Date.parse(invoice.payment_due_at!) > now : true;
   const expired = invoice.status === "cancelled" && invoice.cancel_reason === "expired";
@@ -99,6 +110,12 @@ export default async function StudentInvoicePage({ params }: { params: Promise<{
             ) : null}
             {invoice.status === "awaiting_verification" ? (
               <p>Your transfer has been reported. The admin checks it against the bank statement and confirms it. Your seat stays held meanwhile.</p>
+            ) : null}
+            {canPay && lastReport?.status === "rejected" && lastReport.reject_reason ? (
+              <div className="rounded-card border border-gold bg-gold/15 p-3">
+                <p className="font-semibold">Your last report ({formatRupiah(lastReport.amount)}) was returned</p>
+                <p className="mt-1">{lastReport.reject_reason}</p>
+              </div>
             ) : null}
             {canPay ? (
               <>
@@ -151,7 +168,7 @@ export default async function StudentInvoicePage({ params }: { params: Promise<{
               </Field>
               <ProofUpload userId={session.userId} invoiceId={invoice.id} />
               <div className="flex flex-wrap items-center gap-2">
-                <SubmitButton>{expired ? "Report my transfer" : "I have paid"}</SubmitButton>
+                <ReportPaymentButton invoiceAmount={invoice.amount} label={expired ? "Report my transfer" : "I have paid"} />
               </div>
             </ActionForm>
           ) : null}
