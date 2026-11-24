@@ -11,7 +11,7 @@ import { formatHours, formatMonth, formatWib, wibInputToUtcIso } from "@/lib/tim
 import { saveEntry, submitLogbook } from "../../../actions";
 
 type LessonRow = { id: string; starts_at: string; ends_at: string; duration_minutes: number; tutor_id: string };
-type EntryRow = { id: string; lesson_id: string; topic: string; activities: string; observation: string; recommendation: string; edited_by_admin: boolean };
+type EntryRow = { id: string; lesson_id: string; topic: string; activities: string; observation: string; recommendation: string; edited_by_admin: boolean; updated_at: string };
 type RevisionRow = { entry_id: string; topic: string; activities: string; observation: string; recommendation: string; edited_at: string };
 type ReviewRow = { id: string; action: string; comment: string | null; entry_id: string | null; created_at: string };
 
@@ -52,7 +52,7 @@ export default async function LogbookMonthPage({ params }: { params: Promise<{ c
     ? rows<EntryRow>(
         await supabase
           .from("logbook_entries")
-          .select("id, lesson_id, topic, activities, observation, recommendation, edited_by_admin")
+          .select("id, lesson_id, topic, activities, observation, recommendation, edited_by_admin, updated_at")
           .in("lesson_id", lessonIds),
       )
     : [];
@@ -77,17 +77,38 @@ export default async function LogbookMonthPage({ params }: { params: Promise<{ c
   const notEnded = lessons.length - ended.length;
   const missing = ended.filter((l) => !entryOf.has(l.id));
   const canSubmit = Boolean(logbook) && editable && notEnded === 0 && missing.length === 0 && entries.length > 0 && cls.tutor_id === me;
+  const submitVisible = Boolean(logbook) && editable && cls.tutor_id === me;
 
   const lastRequest = [...reviews].reverse().find((r) => r.action === "changes_requested" && r.entry_id === null);
-  const flagged = new Set(reviews.filter((r) => r.action === "changes_requested" && r.entry_id).map((r) => r.entry_id));
   const showRequest = status === "changes_requested" && lastRequest;
+  // Entries the admin flagged in the latest round, with the moment of that round. A flag only matters while
+  // the logbook is back with the tutor, and it stops being "needs attention" once the entry was edited after it.
+  const flaggedAt = new Map<string, string>();
+  if (showRequest) {
+    for (const r of reviews) {
+      if (r.action === "changes_requested" && r.entry_id && new Date(r.created_at) >= new Date(lastRequest.created_at)) {
+        flaggedAt.set(r.entry_id, r.created_at);
+      }
+    }
+  }
+  const needsAttention = (entry: EntryRow) => {
+    const at = flaggedAt.get(entry.id);
+    return at !== undefined && new Date(entry.updated_at) <= new Date(at);
+  };
+
+  const missingMine = missing.filter((l) => l.tutor_id === me).length;
+  const missingOthers = missing.length - missingMine;
+  const isCurrentTutor = cls.tutor_id === me;
 
   let blockedReason: string | null = null;
   if (!logbook) blockedReason = "Write at least one entry first.";
-  else if (!editable) blockedReason = "This logbook has already been submitted.";
+  else if (status === "approved") blockedReason = "This logbook has been approved and can no longer change.";
+  else if (!editable) blockedReason = "This logbook has been submitted and is waiting for the admin.";
+  else if (!isCurrentTutor) blockedReason = "Write the entries for the lessons you taught. The class's current tutor submits the month once every lesson has an entry.";
   else if (notEnded > 0) blockedReason = `${notEnded} lesson(s) this month have not ended yet. Submit once they have ended and have entries, or cancel lessons that will not happen.`;
-  else if (missing.length > 0) blockedReason = `${missing.length} ended lesson(s) still need an entry.`;
-  else if (cls.tutor_id !== me) blockedReason = "Only the class's current tutor can submit.";
+  else if (missingOthers > 0) {
+    blockedReason = `${missingMine > 0 ? `${missingMine} of your lesson(s) and ` : ""}${missingOthers} lesson(s) taught by a previous tutor still need an entry. If that tutor cannot write it, ask the admin to cancel the lesson.`;
+  } else if (missing.length > 0) blockedReason = `${missing.length} ended lesson(s) still need an entry.`;
 
   return (
     <>
@@ -118,7 +139,7 @@ export default async function LogbookMonthPage({ params }: { params: Promise<{ c
             ) : null}
             {blockedReason ? <p className="mt-1 text-muted">{blockedReason}</p> : null}
           </div>
-          {logbook && editable ? (
+          {logbook && submitVisible ? (
             <ActionForm action={submitLogbook}>
               <input type="hidden" name="logbookId" value={logbook.id} />
               <input type="hidden" name="classId" value={classId} />
@@ -140,14 +161,17 @@ export default async function LogbookMonthPage({ params }: { params: Promise<{ c
             const isEnded = l.ends_at <= now;
             const history = entry ? revisions.filter((r) => r.entry_id === entry.id) : [];
             const mine = l.tutor_id === me;
+            const flagNow = entry ? needsAttention(entry) : false;
+            const fixedSinceFlag = entry ? flaggedAt.has(entry.id) && !flagNow : false;
             return (
-              <Card key={l.id} className={entry && flagged.has(entry.id) ? "border-gold" : ""}>
+              <Card key={l.id} className={flagNow ? "border-gold" : ""}>
                 <CardHeader
                   title={`${formatWib(l.starts_at)} – ${formatWib(l.ends_at, { withDate: false })} · ${formatHours(l.duration_minutes)}`}
                   actions={
                     entry ? (
                       <span className="flex gap-2">
-                        {flagged.has(entry.id) ? <Badge status="changes_requested" label="Needs attention" /> : null}
+                        {flagNow ? <Badge status="changes_requested" label="Needs attention" /> : null}
+                        {fixedSinceFlag ? <Badge status="pending" label="Updated since the request" /> : null}
                         {entry.edited_by_admin ? <Badge status="pending" label="Edited by admin" /> : null}
                         <Badge status="approved" label="Entry written" />
                       </span>
@@ -159,7 +183,9 @@ export default async function LogbookMonthPage({ params }: { params: Promise<{ c
                   }
                 />
                 {!isEnded ? (
-                  <p className="p-4 text-sm text-muted">You can write the entry once the lesson has ended.</p>
+                  <p className="p-4 text-sm text-muted">
+                    {mine ? "You can write the entry once the lesson has ended." : "This lesson was taught by another tutor and has not ended yet."}
+                  </p>
                 ) : editable && mine ? (
                   <ActionForm action={saveEntry} className="grid gap-3 p-4">
                     <input type="hidden" name="lessonId" value={l.id} />
@@ -201,7 +227,11 @@ export default async function LogbookMonthPage({ params }: { params: Promise<{ c
                     </div>
                   </dl>
                 ) : (
-                  <p className="p-4 text-sm text-muted">{mine ? "No entry was written." : "This lesson was taught by another tutor."}</p>
+                  <p className="p-4 text-sm text-muted">
+                    {mine
+                      ? "No entry was written."
+                      : "Waiting for the tutor who taught this lesson to write the entry. If they cannot, ask the admin to cancel the lesson."}
+                  </p>
                 )}
                 {history.length > 0 ? (
                   <details className="border-t border-cloud px-4 py-3 text-sm">

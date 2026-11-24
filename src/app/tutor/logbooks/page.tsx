@@ -11,9 +11,10 @@ type LogbookRow = { class_id: string; month: string; status: string };
 
 export default async function TutorLogbooksPage() {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
   const [classesResult, lessonsResult, logbooksResult, entriesResult] = await Promise.all([
-    supabase.from("classes").select("id, name").eq("tutor_id", auth.user!.id).order("name"),
+    // No filter on the tutor: the database only returns the classes this tutor teaches or taught a lesson in,
+    // so a former tutor still finds the months in which they have entries to write.
+    supabase.from("classes").select("id, name").order("name"),
     supabase.from("lessons").select("id, class_id, starts_at, ends_at").eq("status", "scheduled"),
     supabase.from("logbooks").select("class_id, month, status"),
     supabase.from("logbook_entries").select("lesson_id"),

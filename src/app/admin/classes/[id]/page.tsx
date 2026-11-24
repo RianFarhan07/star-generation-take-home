@@ -7,6 +7,7 @@ import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Table, Td, Th, Tr } from "@/components/ui/Table";
 import { embedded, LIVE_STATUSES, one, rows } from "@/lib/db";
+import { isLessonLocked, lockedMonths, type LogbookLock } from "@/lib/lessonLock";
 import { formatRupiah } from "@/lib/money";
 import { createClient } from "@/lib/supabase/server";
 import { formatHours, formatWib } from "@/lib/time";
@@ -31,12 +32,14 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
   );
   if (!cls) notFound();
 
-  const [rates, enrollments, lessons, tutors] = await Promise.all([
+  const [rates, enrollments, lessons, tutors, logbooks] = await Promise.all([
     supabase.from("class_rates").select("effective_from, student_rate_per_hour, tutor_rate_per_hour").eq("class_id", id).order("effective_from", { ascending: false }),
     supabase.from("enrollments").select("id, status, student:profiles!enrollments_student_id_fkey(full_name)").eq("class_id", id).in("status", LIVE_STATUSES).order("created_at"),
     supabase.from("lessons").select("id, starts_at, ends_at, duration_minutes, status, cancel_reason").eq("class_id", id).order("starts_at", { ascending: false }),
     supabase.from("profiles").select("id, full_name").eq("role", "tutor").order("full_name"),
+    supabase.from("logbooks").select("class_id, month, status").eq("class_id", id),
   ]);
+  const locked = lockedMonths(rows<LogbookLock>(logbooks));
   const rateHistory = rows<RateRow>(rates);
   const now = new Date().toISOString();
   const current = rateHistory.find((r) => r.effective_from <= now) ?? rateHistory[0];
@@ -53,7 +56,7 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
           <ConfirmDialog
             triggerLabel="Change tutor"
             title="Change the tutor of this class"
-            description="Lessons that have already started stay with the current tutor, with their entries and earnings. Lessons that have not started move to the new tutor. If any of them clashes with the new tutor's own lessons, nothing changes."
+            description="Lessons that have already started stay with the tutor who taught them, with their entries and earnings; only that tutor writes their entries, and only you can still cancel them. Lessons that have not started move to the new tutor. If any of them clashes with the new tutor's own lessons, nothing changes."
             confirmLabel="Change tutor"
             action={changeClassTutor}
             values={{ classId: cls.id }}
@@ -233,7 +236,9 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
                     {l.cancel_reason ? <span className="ml-2 text-xs text-muted">{l.cancel_reason}</span> : null}
                   </Td>
                   <Td className="text-right">
-                    {l.status === "scheduled" ? (
+                    {l.status !== "scheduled" ? null : isLessonLocked(locked, cls.id, l.starts_at) ? (
+                      <span className="text-xs text-muted">Month submitted, no longer changeable</span>
+                    ) : (
                       <ConfirmDialog
                         triggerLabel="Cancel"
                         triggerVariant="destructive"
@@ -245,7 +250,7 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
                         action={cancelLesson}
                         values={{ classId: cls.id, lessonId: l.id }}
                       />
-                    ) : null}
+                    )}
                   </Td>
                 </Tr>
               ))}

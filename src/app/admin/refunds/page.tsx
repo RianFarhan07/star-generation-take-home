@@ -23,9 +23,9 @@ type RefundRow = {
 };
 
 const SECTIONS = [
-  { status: "pending", title: "Pending", hint: "Repay these in the bank, then mark them as refunded with the bank reference." },
-  { status: "refunded", title: "Refunded", hint: "" },
-  { status: "cancelled", title: "Cancelled", hint: "" },
+  { status: "pending", title: "Pending", hint: "Repay these in the bank, then mark them as refunded with the bank reference.", empty: "Nothing to repay" },
+  { status: "refunded", title: "Refunded", hint: "", empty: "Nothing has been repaid yet" },
+  { status: "cancelled", title: "Cancelled", hint: "", empty: "No refund has been cancelled" },
 ];
 
 export default async function RefundsPage() {
@@ -53,7 +53,7 @@ export default async function RefundsPage() {
             {section.hint ? <p className="mb-2 text-xs text-muted">{section.hint}</p> : <div className="mb-2" />}
             {list.length === 0 ? (
               <Card>
-                <EmptyState title={`No ${section.title.toLowerCase()} refunds`} />
+                <EmptyState title={section.empty} />
               </Card>
             ) : (
               <Table>

@@ -6,12 +6,15 @@ import { Field, Input, Select } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Table, Td, Th, Tr } from "@/components/ui/Table";
 import { embedded, rows } from "@/lib/db";
+import { isLessonLocked, lockedMonths, type LogbookLock } from "@/lib/lessonLock";
 import { createClient } from "@/lib/supabase/server";
 import { formatHours, formatWib, wibDateInput, wibTimeInput } from "@/lib/time";
 import { addLesson, cancelLesson, updateLessonTime } from "../actions";
 
 type LessonRow = {
   id: string;
+  class_id: string;
+  tutor_id: string;
   starts_at: string;
   ends_at: string;
   duration_minutes: number;
@@ -25,15 +28,19 @@ type LessonRow = {
 export default async function SchedulePage() {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
-  const [classesResult, lessonsResult] = await Promise.all([
-    supabase.from("classes").select("id, name").eq("tutor_id", auth.user!.id).order("name"),
+  const me = auth.user!.id;
+  const [classesResult, lessonsResult, logbooksResult] = await Promise.all([
+    supabase.from("classes").select("id, name").eq("tutor_id", me).order("name"),
     supabase
       .from("lessons")
-      .select("id, starts_at, ends_at, duration_minutes, status, cancel_reason, class:classes!lessons_class_id_fkey(name), entries:logbook_entries(id)")
+      .select("id, class_id, tutor_id, starts_at, ends_at, duration_minutes, status, cancel_reason, class:classes!lessons_class_id_fkey(name), entries:logbook_entries(id)")
       .order("starts_at", { ascending: false }),
+    supabase.from("logbooks").select("class_id, month, status"),
   ]);
   const classes = rows<{ id: string; name: string }>(classesResult);
   const lessons = rows<LessonRow>(lessonsResult);
+  const myClassIds = new Set(classes.map((c) => c.id));
+  const locked = lockedMonths(rows<LogbookLock>(logbooksResult));
   const now = new Date().toISOString();
   const upcoming = lessons.filter((l) => l.ends_at > now).reverse();
   const past = lessons.filter((l) => l.ends_at <= now);
@@ -63,7 +70,13 @@ export default async function SchedulePage() {
               {l.cancel_reason ? <span className="ml-2 text-xs text-muted">{l.cancel_reason}</span> : null}
             </Td>
             <Td>
-              {l.status === "scheduled" ? (
+              {l.status !== "scheduled" ? null : isLessonLocked(locked, l.class_id, l.starts_at) ? (
+                <p className="text-right text-xs text-muted">Month submitted, no longer changeable</p>
+              ) : l.tutor_id !== me ? (
+                <p className="text-right text-xs text-muted">Taught by another tutor</p>
+              ) : !myClassIds.has(l.class_id) ? (
+                <p className="text-right text-xs text-muted">You no longer teach this class</p>
+              ) : (
                 <div className="flex justify-end gap-2">
                   {!embedded(l.entries) ? (
                     <ConfirmDialog
@@ -99,7 +112,7 @@ export default async function SchedulePage() {
                     values={{ lessonId: l.id }}
                   />
                 </div>
-              ) : null}
+              )}
             </Td>
           </Tr>
         ))}
